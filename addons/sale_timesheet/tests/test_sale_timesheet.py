@@ -1046,6 +1046,38 @@ class TestSaleTimesheet(TestCommonSaleTimesheet):
 
         self.assertEqual(len(invoices), 2, "The number of invoices created should be equal to the number of sales orders.")
 
+    def test_timesheet_with_negative_time_spent(self):
+        """
+        Ensure that invoices can properly be created with negative timesheet
+        """
+        sale_order = self.env['sale.order'].create([{
+            'partner_id': self.partner_a.id,
+            'order_line': [Command.create({
+                'product_id': self.product_delivery_timesheet2.id,
+            })],
+        }])
+        so_line = sale_order.order_line
+        sale_order.action_confirm()
+        task1 = sale_order.tasks_ids
+        self.env['account.analytic.line'].create([
+            {
+                'name': 'Timesheet',
+                'date': '2026-09-15',
+                'task_id': task1.id,
+                'project_id': task1.project_id.id,
+                'unit_amount': -1,
+                'employee_id': self.employee_user.id,
+            },
+        ])
+        invoice = self._create_invoice_timesheet_over_period(sale_order, '2026-09-01', '2026-09-30')
+        self.assertEqual(invoice.move_type, 'out_refund', 'Invoicing negative timesheets should create credit notes')
+        self.assertEqual(self._get_valid_invoiced_lines(invoice).quantity, 1.0)
+        invoice.action_post()
+        self.assertRecordValues(so_line, [{
+            'qty_delivered': -1.0,
+            'qty_invoiced': -1.0,
+        }])
+
     def test_linked_timesheet_after_invoice_reversal(self):
         """Test that timesheet entries end up linked to the correct invoice (or unlinked)
         depending on whether the reversal creates a replacement invoice.
@@ -1401,6 +1433,41 @@ class TestSaleTimesheet(TestCommonSaleTimesheet):
 
         self.assertEqual(move.move_type, 'out_invoice')
         self.assertEqual(self._get_valid_invoiced_lines(move).quantity, 1.0)
+
+    def test_period_invoicing_after_manual_over_invoicing(self):
+        sale_order = self._create_order_with_timesheet_lines()
+        so_line = sale_order.order_line
+
+        self.env['account.analytic.line'].create([
+            {
+                'name': 'Timesheet June (1 hour)',
+                'date': '2026-06-15',
+                'unit_amount': 1.0,
+                'project_id': so_line.task_id.project_id.id,
+                'task_id': so_line.task_id.id,
+                'employee_id': self.employee_user.id,
+            },
+            {
+                'name': 'Timesheet July (1 hour)',
+                'date': '2026-07-15',
+                'unit_amount': 1.0,
+                'project_id': so_line.task_id.project_id.id,
+                'task_id': so_line.task_id.id,
+                'employee_id': self.employee_user.id,
+            }
+        ])
+
+        invoice_june = self._create_invoice_timesheet_over_period(sale_order, '2026-06-01', '2026-06-30')
+        self.assertEqual(self._get_valid_invoiced_lines(invoice_june).quantity, 1.0, "Should invoice the one hour of June")
+        self._get_valid_invoiced_lines(invoice_june).write({'quantity': 11.0})
+        invoice_june.action_post()
+
+        self.assertEqual(so_line.qty_delivered, 2.0, "Should reflect both the hours of June and July")
+        self.assertEqual(so_line.qty_invoiced, 11.0, "Should reflect the manual over-invoicing")
+
+        invoice_july = self._create_invoice_timesheet_over_period(sale_order, '2026-07-01', '2026-07-31')
+        self.assertEqual(self._get_valid_invoiced_lines(invoice_july).quantity, 1.0,
+                         'We should invoice the timesheet of July, depsite over-billing the one of June')
 
 
 class TestSaleTimesheetView(TestCommonTimesheet):

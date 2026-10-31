@@ -105,7 +105,7 @@ class PdpFlow(models.Model):
         # get all the moves for which this is the orignial flow but also all the moves linked to any flow with same scope
         for flow in self:
             flow.move_ids = flow._get_moves()
-            flow.error_moves_count = sum(move.l10n_fr_pdp_status == 'error' for move in flow.move_ids)
+            flow.error_moves_count = sum(flow.move_ids.mapped('l10n_fr_pdp_has_error'))
 
     def _compute_payload_attachment(self):
         """Compute the payload attachment record linked to this flow."""
@@ -113,8 +113,11 @@ class PdpFlow(models.Model):
             ('res_model', '=', self._name),
             ('res_id', 'in', self.ids),
             ('mimetype', '=', 'application/xml'),
+            ('name', 'not like', 'message.%'),
         ], order='id desc')
-        attachments_map = {attachment.res_id: attachment for attachment in attachments}
+        attachments_map = {}
+        for attachment in attachments:
+            attachments_map.setdefault(attachment.res_id, attachment)
         for flow in self:
             flow.payload_id = attachments_map.get(flow.id)
 
@@ -156,6 +159,17 @@ class PdpFlow(models.Model):
         but it DOES NOT verify if move is eligible for flow 10
         """
         report_type = move.l10n_fr_pdp_flow_10_report_type
+        last_sent_flow = move.l10n_fr_pdp_sent_in_flow_ids.sorted('id')[-1:]
+        if not report_type and last_sent_flow:
+            # The move left the Flow 10 scope after being reported (e.g. the customer got a VAT
+            # number). Its RE must target the scope it was reported in, not its current (empty) one.
+            return {
+                'company_id': last_sent_flow.company_id.id,
+                'period_start': last_sent_flow.period_start,
+                'period_end': last_sent_flow.period_end,
+                'operation_type': last_sent_flow.operation_type,
+                'report_type': last_sent_flow.report_type,
+            }
         transaction = move if report_type == 'transaction' else move._l10n_fr_pdp_get_matched_transactions()[0]
         period_data = self._get_period_flow_properties(move.company_id, move.date, report_type)
         operation_type = 'purchase' if transaction._l10n_fr_pdp_is_purchase() else 'sale'
@@ -206,14 +220,16 @@ class PdpFlow(models.Model):
 
     def _build_payload(self, moves=None):
         """Build single XML payload for the entire flow period."""
-        invalid_move_states = {None, 'out_of_scope', 'error'}
+        invalid_move_states = {None, 'out_of_scope'}
         for flow in self:
-            if flow.state not in FLOW_OPEN_STATES:
+            if flow.state not in FLOW_OPEN_STATES + ('error',):
                 raise UserError(_("Flow %(name)s has already been sent.", name=flow.name))
 
             if moves is None:
                 moves = flow._get_moves()
-            valid_moves = moves.filtered(lambda move: move.l10n_fr_pdp_status not in invalid_move_states)
+            valid_moves = moves.filtered(
+                lambda move: move.l10n_fr_pdp_status not in invalid_move_states and not move.l10n_fr_pdp_has_error
+            )
 
             if not flow.initial_flow_id and not valid_moves:
                 flow._message_post_once(_("Payload build failed: no valid invoices."))
@@ -222,7 +238,7 @@ class PdpFlow(models.Model):
             payload = self.env['pdp.flow.10.xml.builder']._build_payload(flow, valid_moves)
             filename = flow._get_tracking_id() + '.xml'
 
-            if flow.payload_id:
+            if flow.payload_id and flow.state != 'error':
                 flow.payload_id.unlink()
             flow.payload_id = self.env['ir.attachment'].create({
                 'name': filename,
@@ -234,12 +250,12 @@ class PdpFlow(models.Model):
             })
 
             # Log build completion
-            error_moves_len = len(valid_moves) < len(moves)
-            if error_moves_len:
+            invalid_count = len(moves) - len(valid_moves)
+            if invalid_count:
                 flow._message_post_once(_(
                     "Payload built with %(valid)s valid invoice(s) and %(invalid)s error(s).",
                     valid=len(valid_moves),
-                    invalid=error_moves_len,
+                    invalid=invalid_count,
                 ))
             else:
                 flow._message_post_once(_(
@@ -249,13 +265,16 @@ class PdpFlow(models.Model):
 
     def _get_tracking_id(self):
         self.ensure_one()
-        return ''.join([
-            f'{self.id:x}',
+        tracking_parts = [f'{self.id:x}']
+        if send_attempt := self.env.context.get('l10n_fr_pdp_send_attempt'):
+            tracking_parts.append(f'_{send_attempt}')
+        tracking_parts.extend([
             self.operation_type[0],
             self.report_type[0],
             "R" if self.initial_flow_id else "I",
             self.period_start.strftime("%y%m%d")
-        ]).upper().zfill(19)
+        ])
+        return ''.join(tracking_parts).upper().zfill(19)
 
     # -------------------------------------------------------------------------
     # Business Methods - Sending
@@ -264,7 +283,7 @@ class PdpFlow(models.Model):
     def action_send(self, check_totp=True):
         """Send flow payload to transport gateway. The parameter check totp is no longer useful and will be remove in master """
         for flow in self:
-            if flow.state != 'ready':
+            if flow.state not in FLOW_OPEN_STATES + ('error',):
                 continue
 
             valid_moves_ids = []
@@ -273,7 +292,7 @@ class PdpFlow(models.Model):
             for move in flow_moves:
                 if not move.l10n_fr_pdp_status or move.l10n_fr_pdp_status == 'out_of_scope':
                     continue
-                if move.l10n_fr_pdp_status == 'error':
+                if move.l10n_fr_pdp_has_error:
                     error_moves_ids.append(move.id)
                 else:
                     valid_moves_ids.append(move.id)
@@ -286,7 +305,7 @@ class PdpFlow(models.Model):
                         name=previous_flow.name
                     ))
                     continue
-                if set(previous_flow.sent_move_ids.ids) == set(valid_moves_ids):
+                if flow.state != 'error' and set(previous_flow.sent_move_ids.ids) == set(valid_moves_ids):
                     flow._message_post_once(_(
                         "This flow is identical to the previous flow %(name)s.",
                         name=previous_flow.name
@@ -296,11 +315,23 @@ class PdpFlow(models.Model):
                 flow._message_post_once(_("No valid transactions/payments to send."))
                 continue
 
+            if flow.state == 'error':
+                send_attempt = self.env['ir.attachment'].search_count([
+                    ('res_model', '=', flow._name),
+                    ('res_id', '=', flow.id),
+                    ('mimetype', '=', 'application/xml'),
+                    ('name', 'not like', 'message.%'),
+                ])
+                flow = flow.with_context(l10n_fr_pdp_send_attempt=max(1, send_attempt))
             flow._build_payload(flow_moves)
 
             response = flow._send_to_proxy()
-            flow.pdp_flow_id = response['flow_id'].split('_')[-1]
-            flow.state = 'sent'
+            flow.write({
+                'pdp_flow_id': response['flow_id'].split('_')[-1],
+                'state': 'sent',
+                'transport_status': False,
+                'transport_message': False,
+            })
 
             # Post audit messages on sent moves
             if flow.state in FLOW_SENT_STATES:
@@ -473,7 +504,7 @@ class PdpFlow(models.Model):
 
     def _get_moves(self):
         self.ensure_one()
-        if self.state in FLOW_SENT_STATES_SELECTION:
+        if self.state in FLOW_SENT_STATES:
             return self.sent_move_ids
         moves = self.env['account.move'].search_fetch(
                 domain=[
@@ -499,6 +530,8 @@ class PdpFlow(models.Model):
 
     def action_build_payload_manual(self):
         """Manual trigger for payload building."""
+        if any(flow.state == 'error' for flow in self):
+            raise UserError(_("Rejected flows are rebuilt when resent."))
         self._build_payload()
         _logger.info('Manual payload build triggered for flows: %s', self.ids)
         return True

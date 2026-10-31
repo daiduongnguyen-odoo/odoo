@@ -16,6 +16,7 @@ from odoo.addons.l10n_fr_pdp.utils import drom_com_territories
 
 PAID_CODES = frozenset({'ESC', 'RAB', 'REM', 'MPA', 'MEN'})
 G1_05_RE = re.compile(r'^(?! )(?!.*  )[A-Za-z0-9+\-_/ ]{1,20}(?<! )$')  # can't start with space, can't have 2 consecutive spaces, max 20 chars, allowed chars are alphanumeric, space, -, _, /, can't end with space
+VALID_PDP_TAX_RATES = {0, 0.9, 1.05, 1.75, 2.1, 5.5, 7, 8.5, 9.2, 9.6, 10, 13, 19.6, 20, 20.6}
 PDP_TRACKED_FIELDS = {
     'l10n_fr_pdp_last_flow_id',
     'l10n_fr_pdp_status',
@@ -173,6 +174,16 @@ class AccountMove(models.Model):
                 and move.partner_id._get_pdp_receiver_identification_info()[0] == 'pdp'
             )
 
+    @api.depends('pdp_can_send_response')
+    def _compute_peppol_can_send_response(self):
+        # EXTENDS account_peppol_response to avoid sending the same response through 2 channels
+        super()._compute_peppol_can_send_response()
+        for move in self:
+            move.peppol_can_send_response = (
+                move.peppol_can_send_response
+                and not move.pdp_can_send_response
+            )
+
     @api.depends('company_id')
     def _compute_pdp_uses_pdp(self):
         for move in self:
@@ -183,10 +194,19 @@ class AccountMove(models.Model):
         for move in self:
             move.pdp_is_sent = move.peppol_is_sent and move.pdp_uses_pdp
 
-    def _pdp_get_paid_amount(self):
+    def _pdp_get_reconciled_amls(self):
         self.ensure_one()
         counterpart_move_type = 'out_invoice' if self.move_type == 'out_refund' else 'out_refund'
-        reconciled_amls = self._get_reconciled_amls().filtered(lambda l: l.move_id.move_type != counterpart_move_type)
+        return self._get_reconciled_amls().filtered(lambda l: l.move_id.move_type != counterpart_move_type)
+
+    def _pdp_get_payment_date(self):
+        reconciled_amls = self._pdp_get_reconciled_amls()
+        if not reconciled_amls:
+            return None
+        return max(aml.date for aml in reconciled_amls)
+
+    def _pdp_get_paid_amount(self):
+        reconciled_amls = self._pdp_get_reconciled_amls()
         return self.direction_sign * sum(reconciled_amls.mapped('balance'))
 
     def _pdp_get_paid_lifecycle_total_amount(self):
@@ -353,7 +373,9 @@ class AccountMove(models.Model):
                 '<li><span class="fw-bold">%s</span><ul>%s</ul></li>'
             ) % (_("E-reporting Errors:"), error_lines)
         body += Markup('</ul>')
-        self._message_log(body=body)
+        # Avoid logging a message with a "random" user
+        author_id = self.env.ref('base.partner_root').id if self.env.user.share else None
+        self._message_log(body=body, author_id=author_id)
 
     def button_cancel(self):
         res = super().button_cancel()
@@ -398,7 +420,10 @@ class AccountMove(models.Model):
                 order='id desc',
                 limit=1,
             )
-            if not last_flow or (last_flow.state in FLOW_SENT_STATES and not move.l10n_fr_pdp_sent_in_flow_ids):
+            if not last_flow or (
+                last_flow.state in FLOW_SENT_STATES
+                and any(not scope_move.l10n_fr_pdp_sent_in_flow_ids for scope_move in moves)
+            ):
                 last_flow = Flow._get_open_flow_and_create_if_needed(moves[0])
             moves.l10n_fr_pdp_last_flow_id = last_flow
 
@@ -541,15 +566,31 @@ class AccountMove(models.Model):
     def _get_l10n_fr_pdp_errors(self, lazy=False):
         """Return the list of validation errors for this move in the context of PDP reporting."""
         self.ensure_one()
-        if self.state != 'posted' or self.l10n_fr_pdp_flow_10_report_type == 'payment':  # all the checks concerns transactions properties
+        if self.state != 'posted' or self.l10n_fr_pdp_flow_10_report_type != 'transaction':
             return []
 
         def check():
+            if not self.company_id.partner_id._l10n_fr_pdp_get_siren():
+                yield _("The company SIREN is missing or invalid.")
+
             if transaction_type == 'b2bi':
+                partner_identifier = self.commercial_partner_id._l10n_fr_pdp_get_flow_10_identifier()[1]
+                if not partner_identifier:
+                    if self.commercial_partner_id.country_id in self.env.ref('base.europe').country_ids:
+                        yield _("The partner VAT number is required for EU e-reporting.")
+                    else:
+                        yield _("The partner identifier required for Flow 10 is missing.")
                 try:
                     self.commercial_partner_id.check_vat()
                 except ValidationError:
                     yield _("Invalid partner VAT (%(vat)s).", vat=self.commercial_partner_id.vat)
+                # G2.19 limits Flow 10 VAT identifiers to 18 characters.
+                for partner in (self.company_id.partner_id, self.commercial_partner_id):
+                    if len(partner.vat or '') > 18:
+                        yield _(
+                            "VAT number for %s must not exceed 18 characters.",
+                            partner.display_name,
+                        )
 
             for move in (self + self._l10n_fr_pdp_get_referenced_documents()):
                 if not move or move.move_type == 'entry':
@@ -557,15 +598,44 @@ class AccountMove(models.Model):
                 ref_move = _(" in referenced move %s", move.name) if move != self else ""
                 if not move.name or not G1_05_RE.match(move.name):
                     yield _("Move name is not valid%s.", ref_move)
+                for tax in move.invoice_line_ids.tax_ids.flatten_taxes_hierarchy():
+                    if tax.amount_type == 'fixed' and tax.amount >= 0 and not tax.price_include:
+                        continue  # An additional fixed charge is an amount, not a VAT percentage.
+                    is_valid_oss_rate = (
+                        tax._l10n_fr_pdp_is_oss()
+                        and tax.amount_type == 'percent'
+                        and 0 <= tax.amount <= 100
+                    )
+                    # Reject other fixed taxes even if their amount matches an allowed VAT rate.
+                    if tax.amount_type == 'fixed' or (tax.amount not in VALID_PDP_TAX_RATES and not is_valid_oss_rate):
+                        yield _(
+                            "Tax %(tax)s is not supported by French e-reporting%(ref_move)s.",
+                            tax=tax.display_name,
+                            ref_move=ref_move,
+                        )
                 if transaction_type == 'b2bi':
+                    partner_country_code = drom_com_territories.map_country_code_for_ppf(
+                        move.commercial_partner_id.country_id.code
+                    )
+                    if not partner_country_code or len(partner_country_code) != 2 or not partner_country_code.isalpha():
+                        yield _("Partner country code must contain two letters%s.", ref_move)
+
                     if not move.partner_shipping_id.street:
                         yield _("Missing address street (line 1)%s.", ref_move)
                     if not move.partner_shipping_id.city:
                         yield _("Missing address city%s.", ref_move)
                     if not move.partner_shipping_id.zip:
                         yield _("Missing address zip code%s.", ref_move)
+                    elif len(move.partner_shipping_id.zip) > 10:
+                        yield _("Address zip code must not exceed 10 characters%s.", ref_move)
                     if not move.partner_shipping_id.country_id:
                         yield _("Missing address country%s.", ref_move)
+                    else:
+                        country_code = drom_com_territories.map_country_code_for_ppf(
+                            move.partner_shipping_id.country_id.code
+                        )
+                        if not country_code or len(country_code) != 2 or not country_code.isalpha():
+                            yield _("Address country code must contain two letters%s.", ref_move)
 
         transaction_type = self._l10n_fr_pdp_get_transaction_type()
         if lazy:
@@ -625,13 +695,25 @@ class AccountMove(models.Model):
 
     def button_draft(self):
         for move in self:
-            if move.l10n_fr_pdp_sent_in_flow_ids and move.state == 'posted':
+            # Keep the sent moves of a rejected flow so it can be corrected and resent.
+            if (
+                move.l10n_fr_pdp_sent_in_flow_ids
+                and move.state == 'posted'
+                and move.l10n_fr_pdp_last_flow_id.state != 'error'
+            ):
+                # Ensure the RE flow exists for the move period. This must happen before clearing
+                # l10n_fr_pdp_sent_in_flow_ids: a move that left the Flow 10 scope gets its RE scope
+                # from the last flow it was sent in.
+                self.env['l10n.fr.pdp.reports.flow']._get_open_flow_and_create_if_needed(move)
+                # A move out of the Flow 10 scope won't be part of the RE, even if posted again.
+                # Keep it in the sent moves of the previous flow, so the RE differs from it and
+                # its removal is transmitted.
+                if not move.l10n_fr_pdp_flow_10_report_type:
+                    continue
                 # When a flow is sent it compares the moves it sends vs the moves of the previous
                 # flow to avoid sending the data twice if it's strictly the same.
                 # Setting "l10n_fr_pdp_sent_in_flow_ids" to None will ensure the move is not already
                 # considered as sent in previous flow, and allow the current flow to be sent even if
                 # it's the only diffrence between the 2 flows.
                 move.l10n_fr_pdp_sent_in_flow_ids = False
-                # Ensure RE flow exist for current move period.
-                self.env['l10n.fr.pdp.reports.flow']._get_open_flow_and_create_if_needed(move)
         return super().button_draft()
