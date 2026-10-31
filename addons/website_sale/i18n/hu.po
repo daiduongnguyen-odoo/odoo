@@ -28,9 +28,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-10 17:36+0000\n"
-"PO-Revision-Date: 2026-08-02 14:09+0000\n"
-"Last-Translator: Weblate <noreply-mt-weblate@weblate.org>\n"
+"POT-Creation-Date: 2026-10-24 17:37+0000\n"
+"PO-Revision-Date: 2026-09-02 20:11+0000\n"
+"Last-Translator: Tommy Gombar <tommy.gombar@kilafornia.net>\n"
 "Language-Team: Hungarian <https://translate.odoo.com/projects/odoo-19/"
 "website_sale/hu/>\n"
 "Language: hu\n"
@@ -38,7 +38,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2026.6.1\n"
+"X-Generator: Weblate 2026.8.1\n"
 
 #. module: website_sale
 #: model_terms:ir.ui.view,arch_db:website_sale.products
@@ -180,8 +180,8 @@ msgid ""
 "to cart</span>"
 msgstr ""
 "<i class=\"d-md-none fa fa-shopping-cart\" role=\"presentation\"/>\n"
-"                                    <span class=\"d-none d-md-inline\">"
-"Kosárba</span>"
+"                                    <span class=\"d-none d-md-"
+"inline\">Kosárba</span>"
 
 #. module: website_sale
 #: model_terms:ir.ui.view,arch_db:website_sale.navigation_buttons
@@ -211,8 +211,8 @@ msgid ""
 ">\n"
 "                    <span class=\"o_label small ms-1\">Add to Cart</span>"
 msgstr ""
-"<i class=\"fa fa-fw fa-shopping-cart o_not-animable\" role=\"presentation\"/>"
-"\n"
+"<i class=\"fa fa-fw fa-shopping-cart o_not-animable\" role=\"presentation\"/"
+">\n"
 "                    <span class=\"o_label small ms-1\">Kosárba</span>"
 
 #. module: website_sale
@@ -2649,7 +2649,7 @@ msgstr ""
 #: code:addons/website_sale/static/src/js/combo_configurator_dialog/combo_configurator_dialog.xml:0
 #: code:addons/website_sale/static/src/js/product_configurator_dialog/product_configurator_dialog.xml:0
 msgid "Go to Checkout"
-msgstr ""
+msgstr "Pénztár"
 
 #. module: website_sale
 #. odoo-javascript
@@ -3780,7 +3780,7 @@ msgstr ""
 #. module: website_sale
 #: model:product.ribbon,name:website_sale.out_of_stock_ribbon
 msgid "Out of stock"
-msgstr ""
+msgstr "Készlethiány"
 
 #. module: website_sale
 #. odoo-javascript
@@ -5112,6 +5112,14 @@ msgstr ""
 #. module: website_sale
 #. odoo-python
 #: code:addons/website_sale/controllers/main.py:0
+msgid ""
+"Some products in your cart are not available for purchase in your country. "
+"Please remove them or contact us."
+msgstr ""
+
+#. module: website_sale
+#. odoo-python
+#: code:addons/website_sale/controllers/main.py:0
 msgid "Sorry, we are unable to ship your order."
 msgstr ""
 
@@ -5409,6 +5417,14 @@ msgstr ""
 
 #. module: website_sale
 #. odoo-python
+#: code:addons/website_sale/controllers/cart.py:0
+msgid ""
+"The number of selected combo items must match the number of available combo "
+"choices."
+msgstr ""
+
+#. module: website_sale
+#. odoo-python
 #: code:addons/website_sale/controllers/payment.py:0
 msgid "The order has been cancelled."
 msgstr ""
@@ -5493,7 +5509,7 @@ msgstr ""
 #. module: website_sale
 #: model_terms:ir.ui.view,arch_db:website_sale.alternative_products
 msgid "These other products might interest you"
-msgstr ""
+msgstr "Ezek a termékek szintén érdekelhetik"
 
 #. module: website_sale
 #: model_terms:ir.ui.view,arch_db:website_sale.accordion_more_information
@@ -5534,6 +5550,18 @@ msgstr "Ez a termék már nem érhető el."
 #. odoo-python
 #: code:addons/website_sale/models/sale_order.py:0
 msgid "This product is not available (anymore) in this unit of measure."
+msgstr ""
+
+#. module: website_sale
+#. odoo-python
+#: code:addons/website_sale/controllers/main.py:0
+msgid "This product is not available for purchase in your country."
+msgstr ""
+
+#. module: website_sale
+#. odoo-python
+#: code:addons/website_sale/controllers/cart.py:0
+msgid "This product is part of a combo and can't be updated individually."
 msgstr ""
 
 #. module: website_sale

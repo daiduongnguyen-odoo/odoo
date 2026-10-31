@@ -51,7 +51,11 @@ class HrExpense(models.Model):
     def _default_employee_id(self):
         employee = self.env.user.employee_id
         if not employee and not self.env.user.has_group('hr_expense.group_hr_expense_team_approver'):
-            raise ValidationError(_('The current user has no related employee. Please, create one.'))
+            raise ValidationError(_(
+                "The current user has no related employee. "
+                "Please, create one in %(company)s, or switch to a company where they have one.",
+                company=self.env.company.name,
+            ))
         return employee
 
     name = fields.Char(
@@ -352,20 +356,20 @@ class HrExpense(models.Model):
 
             employee = expense.employee_id
             is_own_expense = employee.user_id == self.env.user
-            if is_own_expense and expense.state == 'draft':
-                # Anyone can edit their own draft expense
+            if (is_own_expense or not employee) and expense.state == 'draft':
+                # Anyone can edit their own draft expense, or a new one without employee yet
+                # (e.g. the user has no employee in the current company)
                 expense.is_editable = True
                 continue
 
             managers = (
                 expense.manager_id
-                | employee.expense_manager_id
-                | employee.sudo().department_id.manager_id.user_id.sudo(self.env.su)
+                | employee._get_expense_managers()
             )
             if is_all_approver:
                 managers |= self.env.user
             if expense.employee_id.id in expenses_employee_ids_under_user_ones:
-                    managers |= self.env.user
+                managers |= self.env.user
             if not is_own_expense and self.env.user in managers:
                 # If Approver-level or designated manager, can edit other people expense
                 expense.is_editable = True
@@ -987,7 +991,7 @@ class HrExpense(models.Model):
         match self.state:
             case 'draft':
                 return self.env.ref('hr_expense.mt_expense_reset')
-            case 'cancel':
+            case 'refused':
                 return self.env.ref('hr_expense.mt_expense_refused')
             case 'paid':
                 return self.env.ref('hr_expense.mt_expense_paid')
@@ -1302,18 +1306,18 @@ class HrExpense(models.Model):
         # Counting the expenses to display in the dashboard:
         # - To Submit: contains the expenses paid either by the employee or by the company, and that are draft or reported
         # - Waiting approval: contains expenses paid by the employee or paid by the company, and that have been submitted but still need to be approved/refused
-        # - To be reimbursed: contains ONLY expenses paid by the employee that are approved, the payment has not yet been made
+        # - To be reimbursed: contains ONLY expenses paid by the employee that are approved or posted, the payment has not yet been made
         base_domain = [
             ('employee_id', 'child_of', self.env.user.employee_ids.ids),
             '|', ('state', 'in', ('draft', 'submitted')),
-            '&', ('payment_mode', '=', 'own_account'), ('state', '=', 'approved')
+            '&', ('payment_mode', '=', 'own_account'), ('state', 'in', {'approved', 'posted'})
         ]
         if domain := self.env.context.get('domain'):
             base_domain = Domain.AND([base_domain, domain])
 
         fetched_expenses = self._read_group(base_domain, ['state'], ['total_amount:sum'])
         for state, total_amount_sum in fetched_expenses:
-            expense_state[state]['amount'] += total_amount_sum
+            expense_state['approved' if state == 'posted' else state]['amount'] += total_amount_sum
         return expense_state
 
     def action_approve_duplicates(self):
@@ -1413,9 +1417,8 @@ class HrExpense(models.Model):
 
             elif not is_hr_admin:
                 current_managers = (
-                        expense_employee.expense_manager_id
-                        | expense_employee.sudo().department_id.manager_id.user_id.sudo(self.env.su)
-                        | expense.manager_id
+                    expense_employee._get_expense_managers()
+                    | expense.manager_id
                 )
                 if expense_employee.id in expenses_employee_ids_under_user_ones:
                     current_managers |= self.env.user

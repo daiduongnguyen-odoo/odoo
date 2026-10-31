@@ -1,8 +1,8 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import http
+from odoo import Command, http
 from odoo.exceptions import AccessError, UserError
-from odoo.tests import HttpCase, new_test_user, tagged
+from odoo.tests import Form, HttpCase, new_test_user, tagged
 from odoo.tools import mute_logger
 
 from odoo.addons.hr_expense.tests.common import TestExpenseCommon
@@ -271,3 +271,55 @@ class TestExpensesAccessRights(TestExpenseCommon, HttpCase):
         self.assertEqual(len(user_attachment), 1)
         user_attachment.sudo().unlink()
         self.assertEqual(len(expense.attachment_ids), 0)
+
+    def test_expense_filter(self):
+        """ Tests '_search_filter_for_expense' domain filtering per user role.
+            - Expense Manager: Sees all employees across the company.
+            - Team Approver: Sees only themselves and their direct reports.
+            - Base Employee: Sees only their own employee record.
+        """
+        hr_admin_user = new_test_user(self.env, login='hr_admin_user', groups='base.group_user,hr.group_hr_user')
+        Employee = self.env['hr.employee'].with_user(hr_admin_user)
+        approver_user = new_test_user(self.env, login='approver_user', groups='base.group_user,hr_expense.group_hr_expense_team_approver')
+        approver_employee = Employee.create({'name': 'approver_emp', 'user_id': approver_user.id})
+        subordinate_employee = Employee.create({'name': 'subordinate_emp', 'parent_id': approver_employee.id})
+
+        base_user = new_test_user(self.env, login='base_user', groups='base.group_user')
+        base_employee = Employee.create({'name': 'base_emp', 'user_id': base_user.id})
+
+        test_cases = [
+            ('Expense Manager', self.expense_user_manager, self.expense_employee + base_employee + approver_employee + subordinate_employee),
+            ('Team Approver', approver_user, approver_employee + subordinate_employee),
+            ('Base Employee', base_user, base_employee),
+        ]
+
+        for case_name, user, expected_employees in test_cases:
+            with self.subTest(case_name=case_name):
+                employees = self.env['hr.employee'].with_user(user).search([('filter_for_expense', '=', True)])
+                self.assertEqual(employees, expected_employees)
+
+    def test_expense_create_without_employee_in_current_company(self):
+        """ A user whose employee belongs to another company than the current one must be able
+            to open a new expense and switch its company to retrieve their employee.
+        """
+        company_1 = self.env.company
+        company_2 = self.company_data_2['company']
+        user = new_test_user(
+            self.env,
+            login='team_approver_company_1',
+            groups='base.group_user,base.group_multi_company,hr_expense.group_hr_expense_team_approver',
+            company_id=company_1.id,
+            company_ids=[Command.set((company_1 + company_2).ids)],
+        )
+        employee = self.env['hr.employee'].sudo().create({
+            'name': 'team_approver_company_1',
+            'user_id': user.id,
+            'company_id': company_1.id,
+        })
+
+        expense_form = Form(self.env['hr.expense'].with_user(user).with_context(allowed_company_ids=(company_2 + company_1).ids))
+        self.assertFalse(expense_form.employee_id)
+        self.assertTrue(expense_form.is_editable)
+        expense_form.company_id = company_1
+        self.assertEqual(expense_form.employee_id, employee)
+        self.assertTrue(expense_form.is_editable)
