@@ -14,9 +14,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-02 17:40+0000\n"
-"PO-Revision-Date: 2026-10-11 11:47+0000\n"
-"Last-Translator: 张飞虎 <feihu.zhang@live.com>\n"
+"POT-Creation-Date: 2026-10-30 17:39+0000\n"
+"PO-Revision-Date: 2026-10-21 06:33+0000\n"
+"Last-Translator: \"Chloe Wang (chwa)\" <chwa@odoo.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://translate.odoo.com/"
 "projects/odoo-20/payment/zh_Hans/>\n"
 "Language: zh_CN\n"
@@ -137,8 +137,8 @@ msgid ""
 "                            Test Mode\n"
 "                        </span>"
 msgstr ""
-"<span invisible=\"is_live\" class=\"badge rounded-pill text-bg-warning fs-"
-"6\">\n"
+"<span invisible=\"is_live\" class=\"badge rounded-pill text-bg-warning "
+"fs-6\">\n"
 "                            测试模式\n"
 "                        </span>"
 
@@ -334,8 +334,8 @@ msgid ""
 "Are you sure you want to void the authorized transaction? "
 "This                                  action can't be undone."
 msgstr ""
-"您确定要作废已授权的交易吗？此操作                                  无法撤销"
-"。"
+"您确定要作废已授权的交易吗？此操作                                  无法撤"
+"销。"
 
 #. module: payment
 #: model:payment.provider,name:payment.payment_provider_asiapay
@@ -1189,7 +1189,7 @@ msgstr "PayPal"
 #. module: payment
 #: model:payment.provider,name:payment.payment_provider_payu
 msgid "PayU"
-msgstr ""
+msgstr "PayU"
 
 #. module: payment
 #: model:ir.model.fields,field_description:payment.field_payment_data__payload
@@ -1399,7 +1399,7 @@ msgstr "付款"
 #. module: payment
 #: model:payment.provider,name:payment.payment_provider_paymob
 msgid "Paymob"
-msgstr ""
+msgstr "Paymob"
 
 #. module: payment
 #: model:ir.model.fields.selection,name:payment.selection__payment_transaction__state__pending
@@ -1542,7 +1542,7 @@ msgstr "重定向表格模板"
 #. module: payment
 #: model:payment.provider,name:payment.payment_provider_redsys
 msgid "Redsys"
-msgstr ""
+msgstr "Redsys"
 
 #. module: payment
 #: model:ir.model.fields,field_description:payment.field_payment_transaction__reference
@@ -2103,6 +2103,18 @@ msgstr ""
 "                     建议为其设置电子邮箱地址。"
 
 #. module: payment
+#. odoo-python
+#: code:addons/payment/controllers/portal.py:0
+msgid "This payment method is not available."
+msgstr ""
+
+#. module: payment
+#. odoo-python
+#: code:addons/payment/controllers/portal.py:0
+msgid "This payment provider is not available."
+msgstr ""
+
+#. module: payment
 #: model_terms:ir.actions.act_window,help:payment.action_payment_provider
 msgid "To add a provider to the current company:"
 msgstr "要向当前公司添加服务商："
@@ -2162,7 +2174,7 @@ msgstr "令牌"
 #. module: payment
 #: model:payment.provider,name:payment.payment_provider_toss_payments
 msgid "Toss Payments"
-msgstr ""
+msgstr "Toss Payments（支付服务商）"
 
 #. module: payment
 #: model:ir.model.fields,field_description:payment.field_payment_capture_wizard__transaction_ids
@@ -2522,7 +2534,7 @@ msgstr "服务商"
 #. odoo-python
 #: code:addons/payment/models/payment_transaction.py:0
 msgid "source_transaction_id"
-msgstr ""
+msgstr "source_transaction_id"
 
 #. module: payment
 #: model_terms:ir.ui.view,arch_db:payment.no_pms_available_warning
@@ -2542,12 +2554,12 @@ msgstr ""
 #. odoo-python
 #: code:addons/payment/models/payment_transaction.py:0
 msgid "transaction_id"
-msgstr ""
+msgstr "transaction_id"
 
 #. module: payment
 #: model:ir.model,name:payment.model_ir_websocket
 msgid "websocket message handling"
-msgstr ""
+msgstr "websocket 消息处理"
 
 #~ msgid "Zip"
 #~ msgstr "邮政编码"

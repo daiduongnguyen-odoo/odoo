@@ -1,6 +1,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 import base64
 import contextlib
+import errno
 import hashlib
 import io
 import os
@@ -100,6 +101,19 @@ class TestIrAttachment(TransactionCaseWithUserDemo):
 
         a2_fn = os.path.join(self.filestore, a2_store_fname2)
         self.assertTrue(os.path.isfile(a2_fn))
+
+    def test_06_create_with_reused_values(self):
+        vals_list = [
+            {'name': 'blob1', 'raw': self.blob1_v},
+            {'name': 'blob2', 'raw': self.blob2_v},
+        ]
+
+        for _ in range(2):
+            attachments = self.Attachment.create(vals_list)
+            self.assertEqual(
+                [attachment.raw.content for attachment in attachments],
+                [self.blob1, self.blob2],
+            )
 
     def test_07_write_mimetype(self):
         """
@@ -284,6 +298,23 @@ class TestIrAttachment(TransactionCaseWithUserDemo):
                 {'name': 'base.pot'},
             )
             self.assertTrue(a.raw.size, "No bytes written")
+
+    def test_16_upload_stream_without_hardlink(self):
+        """ A stream without a path is copied to the filestore when the file-system doesn't
+        support hardlinks: the copy must have the content of the stream, not be empty. """
+        data = b'\xff\xd8\xff' + b'a' * 4096
+        with (
+            patch(
+                "odoo.addons.base.models.ir_attachment.IrAttachment._index",
+                new=lambda *args, **kwargs: None,
+            ),
+            patch(
+                "odoo.addons.base.models.ir_attachment.os.link",
+                side_effect=OSError(errno.ENOTSUP, "no hardlinks"),
+            ),
+        ):
+            attachment = self.env['ir.attachment']._upload_file(io.BytesIO(data), {'name': 'stream.bin'})
+        self.assertEqual(attachment.raw.content, data)
 
     def test_16_create_unique_only_reuses_writable_attachments(self):
         """ create_unique() must not return an attachment the current user cannot write, as

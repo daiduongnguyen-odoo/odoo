@@ -17,8 +17,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 17:41+0000\n"
-"PO-Revision-Date: 2026-10-06 03:33+0000\n"
+"POT-Creation-Date: 2026-11-06 17:38+0000\n"
+"PO-Revision-Date: 2026-10-29 04:33+0000\n"
 "Last-Translator: \"Nurul Aini Akrima Sabila (nuaas)\" <nuaas@odoo.com>\n"
 "Language-Team: Indonesian <https://translate.odoo.com/projects/odoo-20/hr/id/"
 ">\n"
@@ -2615,6 +2615,18 @@ msgid "End of Collaboration"
 msgstr "Akhir Kerja Sama"
 
 #. module: hr
+#. odoo-python
+#: code:addons/hr/models/hr_employee_departure.py:0
+msgid "End of Collaboration cancelled"
+msgstr ""
+
+#. module: hr
+#. odoo-python
+#: code:addons/hr/models/hr_employee_departure.py:0
+msgid "End of Collaboration planned"
+msgstr ""
+
+#. module: hr
 #: model:ir.model.fields,field_description:hr.field_hr_employee__trial_date_end
 #: model:ir.model.fields,field_description:hr.field_hr_version__trial_date_end
 msgid "End of Trial Period"
@@ -2749,8 +2761,7 @@ msgid ""
 "External user with limited access, created only for the purpose of sharing "
 "data."
 msgstr ""
-"Pengguna eksternal dengan akses terbatas, dibuat hanya untuk tujuan berbagi "
-"data."
+"User eksternal dengan akses terbatas, dibuat hanya untuk tujuan berbagi data."
 
 #. module: hr
 #: model_terms:hr.job,website_description:hr.job_consultant
@@ -5012,7 +5023,7 @@ msgstr "Jumlah Partner Terkait"
 #. module: hr
 #: model_terms:ir.ui.view,arch_db:hr.hr_employee_list_activites_view
 msgid "Related User"
-msgstr "Pengguna Terkait"
+msgstr "User Terkait"
 
 #. module: hr
 #: model:ir.model.fields,field_description:hr.field_res_users__employee_ids
@@ -5280,7 +5291,7 @@ msgstr "Jenis Kelamin"
 #: model:ir.model.fields,field_description:hr.field_hr_employee__share
 #: model:ir.model.fields,field_description:hr.field_hr_employee_public__share
 msgid "Share User"
-msgstr "Berbagi Pengguna"
+msgstr "Berbagi User"
 
 #. module: hr
 #: model:ir.model.fields,field_description:hr.field_hr_employee__birthday_public_display
@@ -5862,13 +5873,6 @@ msgstr ""
 #. module: hr
 #. odoo-javascript
 #: code:addons/hr/static/src/components/resource_calendar_form/form_controller.js:0
-msgid ""
-"This working schedule is used by  employee(s), are you sure you want change "
-"it for all employees?"
-msgstr ""
-
-#. module: hr
-#. odoo-javascript
 #: code:addons/hr/static/src/components/resource_calendar_form/resource_calendar_plugin_patch.js:0
 msgid ""
 "This working schedule is used by %s employee(s), are you sure you want "
@@ -6082,7 +6086,7 @@ msgstr "Gunakan tag untuk mengkategorikan Karyawan Anda."
 #: model:ir.model.fields,field_description:hr.field_resource_resource__user_id
 #: model_terms:ir.ui.view,arch_db:hr.view_employee_form
 msgid "User"
-msgstr "Pengguna"
+msgstr "User"
 
 #. module: hr
 #. odoo-python
@@ -6654,6 +6658,12 @@ msgstr "Anda tidak memiliki akses ke dokumen ini."
 #: code:addons/hr/models/hr_employee.py:0
 msgid "You do not have the rights to load the Employees sample data."
 msgstr "Anda tidak berhak memuat data sampel Karyawan."
+
+#. module: hr
+#. odoo-python
+#: code:addons/hr/wizard/hr_bank_account_allocation_wizard_line.py:0
+msgid "You do not have the rights to trust or un-trust accounts."
+msgstr ""
 
 #. module: hr
 #: model_terms:hr.job,description:hr.job_trainee

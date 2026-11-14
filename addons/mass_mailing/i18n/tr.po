@@ -39,8 +39,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0+e\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 17:39+0000\n"
-"PO-Revision-Date: 2026-10-14 13:35+0000\n"
+"POT-Creation-Date: 2026-11-06 17:38+0000\n"
+"PO-Revision-Date: 2026-10-19 06:38+0000\n"
 "Last-Translator: Burkay Yıldızhan <seyil@odoo.com>\n"
 "Language-Team: Turkish <https://translate.odoo.com/projects/odoo-20/"
 "mass_mailing/tr/>\n"
@@ -217,36 +217,6 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:mass_mailing.mass_mailing_kpi_link_trackers
 msgid "%Click (Total)"
 msgstr "%Tıklama (Total)"
-
-#. module: mass_mailing
-#. odoo-javascript
-#: code:addons/mass_mailing/static/src/snippets/mass_mailing_columns_snippets.xml:0
-msgid "'Dining Table'"
-msgstr ""
-
-#. module: mass_mailing
-#. odoo-javascript
-#: code:addons/mass_mailing/static/src/snippets/mass_mailing_columns_snippets.xml:0
-msgid "'Loft Table'"
-msgstr ""
-
-#. module: mass_mailing
-#. odoo-javascript
-#: code:addons/mass_mailing/static/src/snippets/mass_mailing_columns_snippets.xml:0
-msgid "'Nordic Chair'"
-msgstr ""
-
-#. module: mass_mailing
-#. odoo-javascript
-#: code:addons/mass_mailing/static/src/snippets/mass_mailing_columns_snippets.xml:0
-msgid "'Oak Drawer'"
-msgstr ""
-
-#. module: mass_mailing
-#. odoo-javascript
-#: code:addons/mass_mailing/static/src/snippets/mass_mailing_people_snippets.xml:0
-msgid "'Rating'"
-msgstr ""
 
 #. module: mass_mailing
 #. odoo-python
@@ -1308,6 +1278,11 @@ msgid "Attach a file"
 msgstr "Bir dosya ekle"
 
 #. module: mass_mailing
+#: model:ir.model,name:mass_mailing.model_ir_attachment
+msgid "Attachment"
+msgstr ""
+
+#. module: mass_mailing
 #: model:ir.model.fields,field_description:mass_mailing.field_mailing_contact__message_attachment_count
 #: model:ir.model.fields,field_description:mass_mailing.field_mailing_mailing__message_attachment_count
 msgid "Attachment Count"
@@ -1877,11 +1852,6 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:mass_mailing.view_mail_mass_mailing_tree
 msgid "Clicked"
 msgstr "Tıklandı"
-
-#. module: mass_mailing
-#: model_terms:ir.ui.view,arch_db:mass_mailing.link_tracker_click_view_search
-msgid "Clicked By"
-msgstr ""
 
 #. module: mass_mailing
 #: model:ir.model.fields,field_description:mass_mailing.field_mailing_trace__links_click_datetime
@@ -2510,6 +2480,7 @@ msgid "Disk"
 msgstr ""
 
 #. module: mass_mailing
+#: model:ir.model.fields,field_description:mass_mailing.field_ir_attachment__display_name
 #: model:ir.model.fields,field_description:mass_mailing.field_ir_http__display_name
 #: model:ir.model.fields,field_description:mass_mailing.field_ir_mail_server__display_name
 #: model:ir.model.fields,field_description:mass_mailing.field_ir_model__display_name
@@ -2750,6 +2721,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:mass_mailing.field_mailing_trace__email
 #: model:ir.model.fields.selection,name:mass_mailing.selection__mailing_mailing__mailing_type__mail
 #: model:ir.model.fields.selection,name:mass_mailing.selection__mailing_trace__trace_type__mail
+#: model_terms:ir.ui.view,arch_db:mass_mailing.link_tracker_click_view_search
 msgid "Email"
 msgstr "E-Posta"
 
@@ -3202,6 +3174,30 @@ msgstr "Başlık"
 
 #. module: mass_mailing
 #. odoo-javascript
+#: code:addons/mass_mailing/static/src/builder/tabs/design_tab.xml:0
+msgid "Heading 1"
+msgstr ""
+
+#. module: mass_mailing
+#. odoo-javascript
+#: code:addons/mass_mailing/static/src/builder/tabs/design_tab.xml:0
+msgid "Heading 2"
+msgstr ""
+
+#. module: mass_mailing
+#. odoo-javascript
+#: code:addons/mass_mailing/static/src/builder/tabs/design_tab.xml:0
+msgid "Heading 3"
+msgstr ""
+
+#. module: mass_mailing
+#. odoo-javascript
+#: code:addons/mass_mailing/static/src/builder/tabs/design_tab.xml:0
+msgid "Heading 4"
+msgstr ""
+
+#. module: mass_mailing
+#. odoo-javascript
 #: code:addons/mass_mailing/static/src/snippets/mass_mailing_marketing_snippets.xml:0
 msgid "Here's your coupon code - but hurry! Ends 9/28"
 msgstr "İşte kupon kodunuz - ama acele edin! Bitiş 9/28"
@@ -3268,6 +3264,7 @@ msgid "I receive too many emails from this list"
 msgstr "Bu listeden çok fazla e-posta alıyorum"
 
 #. module: mass_mailing
+#: model:ir.model.fields,field_description:mass_mailing.field_ir_attachment__id
 #: model:ir.model.fields,field_description:mass_mailing.field_ir_http__id
 #: model:ir.model.fields,field_description:mass_mailing.field_ir_mail_server__id
 #: model:ir.model.fields,field_description:mass_mailing.field_ir_model__id
@@ -4840,6 +4837,133 @@ msgid ""
 "emails directly into the application.\n"
 "\n"
 msgstr ""
+"Odoo Toplu E-posta\n"
+"-----------------\n"
+"\n"
+"Odoo <a href=\"https://www.odoo.com/app/email-marketing\">E-posta Pazarlama</"
+"a> uygulaması ile\n"
+"müşteri adaylarınıza, fırsatlarınıza veya müşterilerinize kolayca toplu e-"
+"posta gönderin.\n"
+"Kampanyalarınızın performansını takip ederek dönüşüm oranlarını artırın. "
+"Profesyonel\n"
+"e-postalar tasarlayın ve şablonları birkaç tıklamayla yeniden kullanın.\n"
+"\n"
+"Profesyonel E-postalar Gönderin\n"
+"------------------------\n"
+"\n"
+"Aday müşteri veri tabanını içe aktarın veya mevcut müşteri adayları, "
+"fırsatlar\n"
+"ve müşteriler üzerinde filtreleme yapın.\n"
+"\n"
+"Haber bülteniniz için içerik veya özel tasarımlarınızı tekrar kullanmak "
+"üzere e-posta şablonları tanımlayın.\n"
+"Açılma oranlarını en iyi duruma getirmek için kendi IP/adres alanına sahip "
+"birkaç e-posta sunucusu yapılandırın.\n"
+"\n"
+"Pazarlama Kampanyalarını Organize Edin\n"
+"----------------------------\n"
+"\n"
+"<a href=\"https://www.odoo.com/app/email-marketing\">Müşteri Adayı "
+"Otomasyonu</a> uygulamamız ile kampanyalara göre Tasarlayın, Gönderin ve "
+"Takip Edin.\n"
+"\n"
+"Gerçek zamanlı kampanya performans istatistiklerini elde ederek dönüşüm\n"
+"oranınızı geliştirin. Gönderilen, alınan, açılan ve yanıtlanan e-postaları "
+"takip edin.\n"
+"\n"
+"Pazarlama kampanyalarınızı, tartışma gruplarınızı, müşteri adaylarınızı ve\n"
+"fırsatlarınızı tek ve güçlü bir platformda kolayca yönetin.\n"
+"\n"
+"Odoo Uygulamalarıyla Entegre\n"
+"-------------------------\n"
+"\n"
+"Kullanıcılarınızın iletişim şeklini geliştirmek için her Odoo uygulamasından "
+"toplu e-posta özelliklerine erişin.\n"
+"\n"
+"Odoo <a href=\"https://www.odoo.com/app/email-marketing\">CRM "
+"fırsatlarından</a>\n"
+"e-posta şablonları gönderin, pazarlama segmentlerine göre müşteri adayı "
+"seçin, <a href=\"https://www.odoo.com/app/recruitment\">\n"
+"iş ilanları</a> gönderin ve adaylara yanıtları otomatikleştirin, e-posta "
+"şablonlarını müşteri adayı\n"
+"otomasyonu pazarlama kampanyalarında yeniden kullanın.\n"
+"\n"
+"E-postalarınıza gelen yanıtlar, sosyal ağ modülü ile her belgenin geçmişine\n"
+"otomatik olarak eklenir.\n"
+"\n"
+"Müşteri Adayı Veri Tabanınızı Temizleyin\n"
+"------------------------\n"
+"\n"
+"E-postalarınızın performansını kullanarak zaman içinde gelişen temiz bir "
+"müşteri adayı veri tabanına\n"
+"sahip olun. Odoo, geri dönen e-postaları verimli bir şekilde yönetir, hatalı "
+"müşteri\n"
+"adaylarını işaretler ve müşteri adayı kalitenizle ilgili istatistikler "
+"sunar.\n"
+"\n"
+"Tek Tıkla E-posta Gönderimi\n"
+"---------------------\n"
+"\n"
+"Pazarlama departmanı kampanyalar üzerinde çalışmayı çok sevecek. Ama\n"
+"aynı zamanda diğer tüm kullanıcılara da kendi müşteri adayları veya\n"
+"belgeleri üzerinde tek tıkla toplu e-posta gönderme imkanı verebilirsiniz.\n"
+"\n"
+"Birkaç belge seçin (ör. müşteri adayları, destek biletleri, tedarikçiler, "
+"adaylar,\n"
+"...) ve mevcut e-posta şablonlarını yeniden kullanarak tek tıkla onların\n"
+"kişilerine e-posta gönderin.\n"
+"\n"
+"Yanıtların Takibi\n"
+"--------------------\n"
+"\n"
+"Yazışma özelliği, müşterilerinizle daha hızlı ve verimli iletişim kurmanızı "
+"sağlar. Toplu e-posta\n"
+"kampanyalarınıza verilen yanıtlara dayalı olarak otomatik belgeler (müşteri "
+"adayları, fırsatlar,\n"
+"görevler vb.) oluşturun. Tartışmayı doğrudan Odoo’daki iş belgeleri "
+"üzerinde\n"
+"veya e-posta üzerinden takip edin.\n"
+"\n"
+"Tüm müzakereler ve görüşmeler ilgili belgelere eklenir ve belirli olaylarda\n"
+"ilgili yöneticiler bilgilendirilir.\n"
+"\n"
+"Kampanyalar Gösterge Paneli\n"
+"-------------------\n"
+"\n"
+"Daha akıllı pazarlama kampanyaları yürütmek için ihtiyaç duyduğunuz içgörüyü "
+"edinin. Kampanya\n"
+"başına istatistikleri takip edin: geri dönüş oranları, gönderilen e-"
+"postalar, en iyi içerik vb.\n"
+"Net gösterge panelleri, kampanya performansınızın doğrudan bir özetini "
+"verir.\n"
+"\n"
+"Diğer Uygulamalarla Tam Entegrasyon\n"
+"---------------------------------\n"
+"\n"
+"Tetikleyicilere (ör. 20 gündür etkinlik yok, promosyon e-postasına yanıt\n"
+"verildi, vb.) dayalı olarak otomasyon kuralları tanımlayın (ör. satış\n"
+"temsilcisinden arama yapmasını istemek, e-posta göndermek, ...).\n"
+"\n"
+"Kampanyaları müşteri adayı oluşturma aşamasından satış kapatmaya kadar her "
+"kanalda\n"
+"optimize edin. Nereye yatırım yapacağınız konusunda daha akılcı kararlar "
+"verin ve\n"
+"pazarlama faaliyetlerinizin şirketinizin karlılığı üzerindeki etkisini "
+"gösterin.\n"
+"\n"
+"Web sitenize kolayca bir iletişim formu entegre edin. Form gönderimleri Odoo "
+"CRM’de otomatik\n"
+"olarak müşteri adayı oluşturur. Bu müşteri adayları pazarlama "
+"kampanyalarında kullanılabilir.\n"
+"\n"
+"<a href=\"https://www.odoo.com/app/crm\">Satış huninizi</a> zahmetsizce "
+"yönetin.\n"
+"Müşteri adayları çekin, telefon görüşmeleri ve toplantıların takibini "
+"yapın.\n"
+"Müşteri adayı kalitesini analiz edin, bilinçli kararlar verin ve e-"
+"postaları\n"
+"doğrudan uygulamaya entegre ederek zamandan tasarruf edin.\n"
+"\n"
 
 #. module: mass_mailing
 #. odoo-javascript
@@ -5231,6 +5355,12 @@ msgstr "Metni Önizle"
 #. module: mass_mailing
 #: model:ir.model.fields,field_description:mass_mailing.field_mailing_mailing_test__preview_record_ref
 msgid "Preview for"
+msgstr ""
+
+#. module: mass_mailing
+#. odoo-javascript
+#: code:addons/mass_mailing/static/src/builder/tabs/design_tab.xml:0
+msgid "Primary Button"
 msgstr ""
 
 #. module: mass_mailing
@@ -5680,6 +5810,12 @@ msgstr "{{0}} tarihinde planlanmıştır"
 #: code:addons/mass_mailing/static/src/snippets/mass_mailing_columns_snippets.xml:0
 msgid "Second list of Features"
 msgstr "İkinci Özellik listesi"
+
+#. module: mass_mailing
+#. odoo-javascript
+#: code:addons/mass_mailing/static/src/builder/tabs/design_tab.xml:0
+msgid "Secondary Button"
+msgstr ""
 
 #. module: mass_mailing
 #. odoo-javascript
@@ -6357,6 +6493,7 @@ msgstr "Test Edilmiş"
 
 #. module: mass_mailing
 #. odoo-javascript
+#: code:addons/mass_mailing/static/src/builder/tabs/design_tab.xml:0
 #: code:addons/mass_mailing/static/src/snippets/mass_mailing_inner_snippets.xml:0
 msgid "Text"
 msgstr "Metin"

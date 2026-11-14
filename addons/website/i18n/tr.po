@@ -52,7 +52,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 17:41+0000\n"
+"POT-Creation-Date: 2026-11-06 17:38+0000\n"
 "PO-Revision-Date: 2026-10-14 13:33+0000\n"
 "Last-Translator: Burkay Yıldızhan <seyil@odoo.com>\n"
 "Language-Team: Turkish <https://translate.odoo.com/projects/odoo-20/website/"
@@ -313,12 +313,6 @@ msgstr "# Blok sayısı"
 #: model_terms:ir.ui.view,arch_db:website.s_numbers_charts
 msgid "$ 32M"
 msgstr "32 M$"
-
-#. module: website
-#. odoo-python
-#: code:addons/website/models/ir_ui_view.py:0
-msgid "%(error)s (website: %(website_id)s)"
-msgstr "%(error)s (web sitesi: %(website_id)s)"
 
 #. module: website
 #. odoo-python
@@ -4978,6 +4972,7 @@ msgstr ""
 
 #. module: website
 #. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/font/add_font_dialog.xml:0
 #: code:addons/website/static/src/builder/plugins/options/header/header_navigation_option.xml:0
 #: code:addons/website/static/src/builder/plugins/theme/theme_font_weight_option.xml:0
 #: code:addons/website/static/src/builder/plugins/theme/theme_tab_plugin.js:0
@@ -6665,6 +6660,8 @@ msgid "Countdown is over - Firework"
 msgstr "Geri sayım bitti - Havai fişek"
 
 #. module: website
+#. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/options/visibility_option.xml:0
 #: model:ir.model.fields,field_description:website.field_website_visitor__country_id
 #: model_terms:ir.ui.view,arch_db:website.website_visitor_view_search
 msgid "Country"
@@ -7200,7 +7197,7 @@ msgstr "Varsayılan anahtar kutusu girişi"
 #. module: website
 #. odoo-python
 #: code:addons/website/models/website.py:0
-msgid "Default website changed"
+msgid "Default website changed to %(default_website_name)s."
 msgstr ""
 
 #. module: website
@@ -7979,6 +7976,12 @@ msgstr "Seçtiğiniz biriyle değiştirmek için bir simgeyi çift tıklayın."
 #: code:addons/website/static/src/builder/plugins/options/chart_option.xml:0
 msgid "Doughnut"
 msgstr "Tatlı çörek"
+
+#. module: website
+#. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/options/popup_option_plugin.js:0
+msgid "Drag blocks here"
+msgstr ""
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.s_mega_menu_dropzone
@@ -8942,6 +8945,12 @@ msgstr "Uzantı Görünümü"
 #: model:ir.model.fields,field_description:website.field_website_page__xml_id
 msgid "External ID"
 msgstr "Harici Kimlik"
+
+#. module: website
+#. odoo-python
+#: code:addons/website/models/ir_ui_view.py:0
+msgid "External ID can not be loaded: %(error)s (website: %(website_id)s)"
+msgstr ""
 
 #. module: website
 #. odoo-javascript
@@ -12175,6 +12184,8 @@ msgid "Language from the website when visitor has been created"
 msgstr "Ziyaretçi oluşturulduğunda web sitesindeki dil"
 
 #. module: website
+#. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/options/visibility_option.xml:0
 #: model:ir.model.fields,field_description:website.field_res_config_settings__language_ids
 #: model:ir.model.fields,field_description:website.field_website__language_ids
 #: model_terms:ir.ui.view,arch_db:website.res_config_settings_view_form
@@ -12502,6 +12513,7 @@ msgstr "Kütüphane"
 
 #. module: website
 #. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/font/add_font_dialog.xml:0
 #: code:addons/website/static/src/builder/plugins/options/searchbar_option.xml:0
 #: code:addons/website/static/src/builder/plugins/theme/theme_font_weight_option.xml:0
 #: code:addons/website/static/src/builder/plugins/theme/theme_tab_plugin.js:0
@@ -16191,6 +16203,7 @@ msgstr "Rotanın listesini yenile"
 #. odoo-javascript
 #: code:addons/website/static/src/builder/plugins/carousel_option.xml:0
 #: code:addons/website/static/src/builder/plugins/content_width_option.xml:0
+#: code:addons/website/static/src/builder/plugins/font/add_font_dialog.xml:0
 #: code:addons/website/static/src/builder/plugins/options/base_visibility_option.xml:0
 #: code:addons/website/static/src/builder/plugins/options/dynamic_snippet_carousel_option.xml:0
 #: code:addons/website/static/src/builder/plugins/options/footer_option.xml:0
@@ -18693,6 +18706,12 @@ msgid "Template fallback"
 msgstr "Şablon Adı"
 
 #. module: website
+#. odoo-python
+#: code:addons/website/models/ir_ui_view.py:0
+msgid "Template not found: '%(error)s' (website: %(website_id)s)"
+msgstr ""
+
+#. module: website
 #. odoo-javascript
 #: code:addons/website/static/src/builder/plugins/form/form.edit.xml:0
 msgid "Terms & Conditions"
@@ -18972,12 +18991,6 @@ msgid "The form has been sent successfully."
 msgstr "Form başarılı şekilde gönderildi."
 
 #. module: website
-#. odoo-python
-#: code:addons/website/controllers/form.py:0
-msgid "The form's specified model does not exist"
-msgstr "Formun belirtilen modeli mevcut değil"
-
-#. module: website
 #: model:ir.model.fields,help:website.field_ir_actions_server__website_url
 #: model:ir.model.fields,help:website.field_ir_cron__website_url
 msgid "The full URL to access the server action through the website."
@@ -19093,22 +19106,6 @@ msgstr ""
 #: model:ir.model.fields,help:website.field_website_controller_page__name_slugified
 msgid "The name of the page usable in a URL"
 msgstr "Bir URL’de kullanılabilir sayfa adı"
-
-#. module: website
-#. odoo-python
-#: code:addons/website/models/website.py:0
-msgid "The new default website is %(default_website_name)s."
-msgstr ""
-
-#. module: website
-#. odoo-python
-#: code:addons/website/models/website.py:0
-msgid ""
-"The new default website is %(default_website_name)s. The following default "
-"settings were copied from the old default website to the new one: %"
-"(transferred_settings)s. Note that these settings are still present on the "
-"old default website."
-msgstr ""
 
 #. module: website
 #. odoo-python
@@ -19392,6 +19389,13 @@ msgstr ""
 #. odoo-javascript
 #: code:addons/website/static/src/builder/plugins/theme/theme_font_weight_option.js:0
 msgid "This font is missing font weight"
+msgstr ""
+
+#. module: website
+#. odoo-python
+#: code:addons/website/controllers/form.py:0
+msgid ""
+"This form cannot be submitted. Please contact the website administrator."
 msgstr ""
 
 #. module: website
@@ -20186,6 +20190,24 @@ msgstr "URL ‘#’ ile başlamamalıdır."
 #: model:ir.model.fields,field_description:website.field_website_rewrite__url_to
 msgid "URL to"
 msgstr "URL adresi"
+
+#. module: website
+#. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/options/visibility_option.xml:0
+msgid "UTM Campaign"
+msgstr ""
+
+#. module: website
+#. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/options/visibility_option.xml:0
+msgid "UTM Medium"
+msgstr ""
+
+#. module: website
+#. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/options/visibility_option.xml:0
+msgid "UTM Source"
+msgstr ""
 
 #. module: website
 #. odoo-javascript
@@ -23619,12 +23641,6 @@ msgid "rows"
 msgstr "satırlar"
 
 #. module: website
-#. odoo-javascript
-#: code:addons/website/static/src/components/resource_editor/resource_editor.xml:0
-msgid "scope.data.label"
-msgstr ""
-
-#. module: website
 #: model_terms:ir.ui.view,arch_db:website.snippets
 msgid ""
 "scrolling, depth, effect, backgrounds, layer, visual, movement, parallax"
@@ -23804,12 +23820,6 @@ msgstr "bu sayfa"
 
 #. module: website
 #. odoo-javascript
-#: code:addons/website/static/src/components/resource_editor/resource_editor.xml:0
-msgid "this.state.type === 'xml' ? resource.name : resource.label"
-msgstr ""
-
-#. module: website
-#. odoo-javascript
 #: code:addons/website/static/src/builder/plugins/options/animate_option.xml:0
 msgid "to"
 msgstr "den"
@@ -23913,6 +23923,12 @@ msgstr "✽  Pizzalar"
 #: model_terms:ir.ui.view,arch_db:website.s_key_benefits
 msgid "✽  What We Offer"
 msgstr "✽  Sunduklarımız"
+
+#~ msgid "%(error)s (website: %(website_id)s)"
+#~ msgstr "%(error)s (web sitesi: %(website_id)s)"
+
+#~ msgid "The form's specified model does not exist"
+#~ msgstr "Formun belirtilen modeli mevcut değil"
 
 #~ msgid "Fit text"
 #~ msgstr "Metni sığdır"

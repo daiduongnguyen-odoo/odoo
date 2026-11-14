@@ -17,9 +17,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 17:41+0000\n"
-"PO-Revision-Date: 2026-10-08 09:46+0000\n"
-"Last-Translator: Odoo Translation Bot <c3p@odoo.com>\n"
+"POT-Creation-Date: 2026-11-06 17:38+0000\n"
+"PO-Revision-Date: 2026-10-29 04:33+0000\n"
+"Last-Translator: \"Nurul Aini Akrima Sabila (nuaas)\" <nuaas@odoo.com>\n"
 "Language-Team: Indonesian <https://translate.odoo.com/projects/odoo-20/"
 "point_of_sale/id/>\n"
 "Language: id\n"
@@ -60,7 +60,7 @@ msgstr "% Diskon"
 #. module: point_of_sale
 #: model_terms:ir.ui.view,arch_db:point_of_sale.pos_orderline_receipt_information
 msgid "% discount off on"
-msgstr ""
+msgstr "diskon % pada"
 
 #. module: point_of_sale
 #. odoo-python
@@ -297,19 +297,19 @@ msgstr "Celana jeans 5 saku berbahan denim katun.."
 msgid ""
 "<div style=\"margin: 0; padding: 0; font-size: 14px;\">\n"
 "                    <t t-set=\"client_name\" t-"
-"value=\"object.partner_id.name\"/>\n"
+"value=\"object.partner_id.name\"></t>\n"
 "                    <t t-set=\"store_name\" t-"
-"value=\"object.config_id.name\"/>\n"
+"value=\"object.config_id.name\"></t>\n"
 "                    <t t-set=\"tz\" t-"
-"value=\"object.company_id.partner_id.tz\"/>\n"
+"value=\"object.company_id.partner_id.tz\"></t>\n"
 "                    <t t-set=\"lg\" t-value=\"object.partner_id.lang or "
-"user.lang\"/>\n"
+"user.lang\"></t>\n"
 "                    <div>\n"
 "                        <t t-if=\"client_name\">Hello <t t-"
 "out=\"client_name\">Client name</t>,</t>\n"
 "                        <t t-else=\"\">Hello,</t>\n"
 "                    </div>\n"
-"                    <br/>\n"
+"                    <br>\n"
 "                    <div>Thank you for purchasing from <t t-"
 "out=\"store_name\">Store name</t>!</div>\n"
 "                    <div>Attached, you will find your receipt for the "
@@ -319,43 +319,13 @@ msgid ""
 "time_format='short',                          lang_code=lg)\">time</t>.</"
 "span>\n"
 "                    </div>\n"
-"                    <br/>\n"
+"                    <br>\n"
 "                    <div>With kind regards,</div>\n"
-"                    <br/>\n"
+"                    <br>\n"
 "                    <t t-out=\"store_name\">Store name</t>\n"
 "                </div>\n"
 "            "
 msgstr ""
-"<div style=\"margin: 0; padding: 0; font-size: 14px;\">\n"
-"                    <t t-set=\"client_name\" t-"
-"value=\"object.partner_id.name\"/>\n"
-"                    <t t-set=\"store_name\" t-"
-"value=\"object.config_id.name\"/>\n"
-"                    <t t-set=\"tz\" t-"
-"value=\"object.company_id.partner_id.tz\"/>\n"
-"                    <t t-set=\"lg\" t-value=\"object.partner_id.lang or "
-"user.lang\"/>\n"
-"                    <div>\n"
-"                        <t t-if=\"client_name\">Halo <t t-"
-"out=\"client_name\">Nama klien</t>,</t>\n"
-"                        <t t-else=\"\">Halo,</t>\n"
-"                    </div>\n"
-"                    <br/>\n"
-"                    <div>Terima kasih sudah berbelanja di <t t-"
-"out=\"store_name\">Nama toko</t>!</div>\n"
-"                    <div>Terlampir bukti pembelian pada <span><t t-"
-"out=\"format_datetime(dt=object.date_order, tz=tz, dt_format=&quot;EEEE d "
-"MMMM&quot;,                          lang_code=lg) or ''\">tanggal</t> <t t-"
-"out=\"format_time(time=object.date_order, tz=tz, "
-"time_format='short',                          lang_code=lg)\">waktu</t>.</"
-"span>\n"
-"                    </div>\n"
-"                    <br/>\n"
-"                    <div>Salam hangat,</div>\n"
-"                    <br/>\n"
-"                    <t t-out=\"store_name\">Nama toko</t>\n"
-"                </div>\n"
-"            "
 
 #. module: point_of_sale
 #: model_terms:ir.ui.view,arch_db:point_of_sale.view_partner_form_pos_ui
@@ -618,8 +588,20 @@ msgstr "? Mengeklik \"Konfirmasi\" akan memvalidasi pembayaran."
 
 #. module: point_of_sale
 #. odoo-python
+#: code:addons/point_of_sale/models/pos_order.py:0
+msgid "A customer is required on the order to create an invoice."
+msgstr ""
+
+#. module: point_of_sale
+#. odoo-python
 #: code:addons/point_of_sale/models/pos_payment_method.py:0
 msgid "A customer is required to use the payment method %s."
+msgstr "Pelanggan diwajibkan menggunakan metode pembayaran %s."
+
+#. module: point_of_sale
+#. odoo-python
+#: code:addons/point_of_sale/models/pos_payment.py:0
+msgid "A customer must be set on the order to pay with a customer account."
 msgstr ""
 
 #. module: point_of_sale
@@ -1599,6 +1581,7 @@ msgstr "Kembali"
 
 #. module: point_of_sale
 #. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/navbar/burger_menu/burger_menu_dialog.xml:0
 #: code:addons/point_of_sale/static/src/app/screens/login_screen/login_screen.js:0
 msgid "Backend"
 msgstr "Backend"
@@ -1669,12 +1652,12 @@ msgstr "Rekening Koran"
 #. module: point_of_sale
 #: model:ir.model,name:point_of_sale.model_account_bank_statement_line
 msgid "Bank Transaction"
-msgstr ""
+msgstr "Transaksi Bank"
 
 #. module: point_of_sale
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_session__bank_statement_line_ids
 msgid "Bank Transactions"
-msgstr ""
+msgstr "Transaksi Bank"
 
 #. module: point_of_sale
 #. odoo-python
@@ -1747,6 +1730,12 @@ msgid "Before 19.1:"
 msgstr "Sebelum 19.1:"
 
 #. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/screens/product_screen/control_buttons/control_buttons.xml:0
+msgid "Bill"
+msgstr ""
+
+#. module: point_of_sale
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_config__iface_printbill
 #: model:ir.model.fields,field_description:point_of_sale.field_res_config_settings__pos_iface_printbill
 msgid "Bill Printing"
@@ -1813,6 +1802,12 @@ msgstr "Roti-Roti"
 
 #. module: point_of_sale
 #. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/screens/product_screen/control_buttons/control_buttons.xml:0
+msgid "Break Combo"
+msgstr ""
+
+#. module: point_of_sale
+#. odoo-javascript
 #: code:addons/point_of_sale/static/src/backend/lna_checklist/lna_checklist.xml:0
 msgid "Browser LNA Prompt"
 msgstr "Prompt LNA Browser"
@@ -1869,6 +1864,7 @@ msgstr "Tidak dapat membuat QR untuk jumlah nol"
 
 #. module: point_of_sale
 #. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/popups/select_default_payment_method_popup/select_default_payment_method_popup.xml:0
 #: code:addons/point_of_sale/static/src/app/components/popups/select_default_printer_popup/select_default_printer_popup.xml:0
 #: code:addons/point_of_sale/static/src/app/screens/payment_screen/payment_lines/payment_lines.js:0
 #: code:addons/point_of_sale/static/src/app/services/pos_store.js:0
@@ -1876,6 +1872,8 @@ msgid "Cancel"
 msgstr "Batal"
 
 #. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/screens/product_screen/control_buttons/control_buttons.xml:0
 #: model:ir.actions.server,name:point_of_sale.pos_order_set_cancel
 msgid "Cancel Order"
 msgstr "Batalkan Pesanan"
@@ -2032,6 +2030,7 @@ msgstr "Tunai Masuk / Keluar"
 
 #. module: point_of_sale
 #. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/navbar/burger_menu/burger_menu_dialog.xml:0
 #: code:addons/point_of_sale/static/src/app/components/popups/closing_popup/closing_popup.xml:0
 msgid "Cash In/Out"
 msgstr "Kas Masuk/Keluar"
@@ -2425,6 +2424,7 @@ msgstr "Tutup"
 
 #. module: point_of_sale
 #. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/navbar/burger_menu/burger_menu_dialog.xml:0
 #: code:addons/point_of_sale/static/src/app/components/popups/closing_popup/closing_popup.xml:0
 msgid "Close Register"
 msgstr "Tutup Kasir"
@@ -2713,6 +2713,7 @@ msgstr "Konfigurasi setidaknya satu POS."
 #: code:addons/point_of_sale/static/src/app/components/popups/error_dialog/error_dialog.js:0
 #: code:addons/point_of_sale/static/src/app/components/popups/money_details_popup/money_details_popup.xml:0
 #: code:addons/point_of_sale/static/src/app/components/popups/number_popup/number_popup.js:0
+#: code:addons/point_of_sale/static/src/app/components/popups/select_default_payment_method_popup/select_default_payment_method_popup.xml:0
 #: code:addons/point_of_sale/static/src/app/components/popups/select_default_printer_popup/select_default_printer_popup.xml:0
 #: code:addons/point_of_sale/static/src/app/components/tour_selector_popup/tour_selector_popup.xml:0
 #: model_terms:ir.ui.view,arch_db:point_of_sale.view_confirm_action_wizard
@@ -2960,6 +2961,12 @@ msgid "Create Partner"
 msgstr "Buat Partner"
 
 #. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/navbar/burger_menu/burger_menu_dialog.xml:0
+msgid "Create Product"
+msgstr "Buat Produk"
+
+#. module: point_of_sale
 #: model:ir.model,website_form_label:point_of_sale.model_res_partner
 msgid "Create a Customer"
 msgstr "Buat Pelanggan"
@@ -3131,6 +3138,8 @@ msgid "Customer Account"
 msgstr "Akun Pelanggan"
 
 #. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/navbar/burger_menu/burger_menu_dialog.xml:0
 #: model_terms:ir.ui.view,arch_db:point_of_sale.res_config_settings_view_form
 msgid "Customer Display"
 msgstr "Tampilan Pelanggan"
@@ -4705,9 +4714,21 @@ msgstr ""
 "dibandingkan ke kuantitas minimum 0."
 
 #. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/screens/product_screen/control_buttons/control_buttons.xml:0
+msgid "Info"
+msgstr ""
+
+#. module: point_of_sale
 #: model_terms:ir.ui.view,arch_db:point_of_sale.product_template_form_view
 msgid "Information about your product."
 msgstr "Informasi mengenai produk Anda."
+
+#. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/navbar/burger_menu/burger_menu_dialog.xml:0
+msgid "Install App"
+msgstr "Instal App"
 
 #. module: point_of_sale
 #: model_terms:ir.actions.act_window,help:point_of_sale.action_pos_payment_method_form
@@ -5165,11 +5186,6 @@ msgstr ""
 "jurnal."
 
 #. module: point_of_sale
-#: model_terms:ir.ui.view,arch_db:point_of_sale.pos_payment_method_view_form
-msgid "Leave empty to use the receivable account of customer"
-msgstr "Biarkan kosong untuk menggunakan akun piutang pelanggan"
-
-#. module: point_of_sale
 #: model:ir.model.fields,help:point_of_sale.field_pos_payment_method__journal_id
 msgid ""
 "Leave empty to use the receivable account of customer.\n"
@@ -5181,6 +5197,15 @@ msgid ""
 "payment method.\n"
 "Only cash and bank journals are allowed."
 msgstr ""
+"Kosongkan untuk menggunakan akun piutang pelanggan.\n"
+"Menentukan jurnal tempat mencatat pembayaran yang terakumulasi (atau "
+"pembayaran individual jika \"Identifikasi Pelanggan\" bernilai true) setelah "
+"sesi ditutup.\n"
+"Untuk jurnal kas, kami langsung mencatat ke akun default di jurnal melalui "
+"transaksi bank.\n"
+"Untuk jurnal bank, kami mencatat ke Akun Belum Lunas yang ditentukan dalam "
+"metode pembayaran ini.\n"
+"Hanya jurnal kas dan jurnal bank yang diperbolehkan."
 
 #. module: point_of_sale
 #: model:product.template,name:point_of_sale.letter_tray_product_template
@@ -6548,6 +6573,7 @@ msgstr "Buka"
 
 #. module: point_of_sale
 #. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/popups/opening_control_popup/opening_control_popup.xml:0
 #: code:addons/point_of_sale/static/src/app/screens/payment_screen/payment_screen.xml:0
 msgid "Open Cashbox"
 msgstr "Buka Cashbox"
@@ -7126,7 +7152,7 @@ msgstr "Kategori Induk"
 #. odoo-python
 #: code:addons/point_of_sale/models/pos_session.py:0
 msgid "Partial reversal of %s for PoS Order invoicing"
-msgstr ""
+msgstr "Pembalikan sebagian dari %s untuk Faktur Pesanan POS"
 
 #. module: point_of_sale
 #: model_terms:ir.ui.view,arch_db:point_of_sale.view_partner_form_pos_ui
@@ -7195,6 +7221,8 @@ msgid "Payment Method"
 msgstr "Metode Pembayaran"
 
 #. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/navbar/burger_menu/burger_menu_dialog.xml:0
 #: model:ir.actions.act_window,name:point_of_sale.action_pos_payment_method_form
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_config__payment_method_ids
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_session__payment_method_ids
@@ -7719,7 +7747,7 @@ msgstr "Sesi Point of Sale"
 #. module: point_of_sale
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_config__group_pos_user_id
 msgid "Point of Sale User Group"
-msgstr "Grup Pengguna Point of Sale"
+msgstr "Grup User Point of Sale"
 
 #. module: point_of_sale
 #: model_terms:ir.ui.view,arch_db:point_of_sale.view_pos_payment_method_kanban
@@ -7834,7 +7862,7 @@ msgstr "Status Sesi POS"
 #. module: point_of_sale
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_config__pos_session_username
 msgid "Pos Session Username"
-msgstr "Nama Pengguna Sesi POS"
+msgstr "Nama User Sesi POS"
 
 #. module: point_of_sale
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_payment_method__open_session_ids
@@ -8001,6 +8029,8 @@ msgid "Priced Product"
 msgstr "Harga Produk"
 
 #. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/screens/product_screen/control_buttons/control_buttons.xml:0
 #: model:ir.model,name:point_of_sale.model_product_pricelist
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_order__pricelist_id
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_preset__pricelist_id
@@ -8057,6 +8087,12 @@ msgstr "Cetak"
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_order__print_history
 msgid "Print History"
 msgstr "Riwayat Cetak"
+
+#. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/navbar/burger_menu/burger_menu_dialog.xml:0
+msgid "Print Report"
+msgstr "Cetak Laporan"
 
 #. module: point_of_sale
 #. odoo-javascript
@@ -8190,6 +8226,7 @@ msgstr "Alamat IP lokal printer dicetak"
 
 #. module: point_of_sale
 #. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/navbar/burger_menu/burger_menu_dialog.xml:0
 #: code:addons/point_of_sale/static/src/app/components/popups/select_default_printer_popup/select_default_printer_popup.xml:0
 #: model:ir.actions.act_window,name:point_of_sale.action_pos_printer_form
 #: model:ir.ui.menu,name:point_of_sale.menu_pos_printers
@@ -8718,6 +8755,7 @@ msgstr "Muat ulang"
 
 #. module: point_of_sale
 #. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/navbar/burger_menu/burger_menu_dialog.xml:0
 #: code:addons/point_of_sale/static/src/app/components/popups/confirmation_dialog/confirmation_dialog.xml:0
 #: code:addons/point_of_sale/static/src/app/components/popups/error_dialog/error_dialog.js:0
 #: code:addons/point_of_sale/static/src/app/components/popups/error_dialog/error_dialog.xml:0
@@ -9158,6 +9196,11 @@ msgid "Select a customer with a valid address."
 msgstr "Pilih pelanggan dengan alamat valid."
 
 #. module: point_of_sale
+#: model_terms:ir.ui.view,arch_db:point_of_sale.pos_payment_method_view_form
+msgid "Select a journal"
+msgstr ""
+
+#. module: point_of_sale
 #. odoo-javascript
 #: code:addons/point_of_sale/static/src/app/utils/order_payment_validation.js:0
 msgid "Select a payment method to validate the order."
@@ -9186,6 +9229,12 @@ msgstr "Pilih daftar harga"
 #: code:addons/point_of_sale/static/src/app/screens/ticket_screen/ticket_screen.xml:0
 msgid "Select the product(s) to refund and set the quantity"
 msgstr "Pilih produk untuk merefund dan menetapkan kuantitas"
+
+#. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/popups/select_default_payment_method_popup/select_default_payment_method_popup.xml:0
+msgid "Select your default payment method"
+msgstr ""
 
 #. module: point_of_sale
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_order_line__attribute_value_ids
@@ -9625,7 +9674,7 @@ msgstr "Beberapa pesanan sudah sedang difaktur. Silakan coba lagi nanti."
 #. odoo-python
 #: code:addons/point_of_sale/models/pos_session.py:0
 msgid "Some orders are not globally invoiced."
-msgstr ""
+msgstr "Beberapa order tidak ditagihkan secara global."
 
 #. module: point_of_sale
 #. odoo-javascript
@@ -9747,6 +9796,12 @@ msgstr ""
 "Terlambat: Batas waktu telah terlewati\n"
 "Hari ini: Tanggal aktivitas adalah hari ini\n"
 "Direncanakan: Aktivitas yang akan datang."
+
+#. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/loader/loader.js:0
+msgid "Still loading, thank you for your patience…"
+msgstr ""
 
 #. module: point_of_sale
 #. odoo-javascript
@@ -9933,6 +9988,8 @@ msgid "Tare Weight:"
 msgstr "Tare Weight:"
 
 #. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/screens/product_screen/control_buttons/control_buttons.xml:0
 #: model:ir.model,name:point_of_sale.model_account_tax
 #: model_terms:ir.ui.view,arch_db:point_of_sale.pos_order_receipt
 msgid "Tax"
@@ -10396,6 +10453,14 @@ msgid ""
 msgstr "Metode pembayaran yang dipilih tidak diizinkan di konfig sesi POS."
 
 #. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/popups/select_default_payment_method_popup/select_default_payment_method_popup.xml:0
+msgid ""
+"The payment method you choose will be linked to your device. You can change "
+"it later from the menu on top right."
+msgstr ""
+
+#. module: point_of_sale
 #: model:ir.model.fields,help:point_of_sale.field_pos_config__iface_available_categ_ids
 msgid ""
 "The point of sale will only display products which are within one of the "
@@ -10483,7 +10548,7 @@ msgstr "Resi akan secara otomatis dicetak di akhir masing-masing order."
 #. odoo-javascript
 #: code:addons/point_of_sale/static/src/app/components/popups/opening_control_popup/opening_control_popup.js:0
 msgid "The register cannot be opened while offline. Please try again."
-msgstr ""
+msgstr "Kasir tidak dapat dibuka saat offline. Silakan coba lagi."
 
 #. module: point_of_sale
 #. odoo-javascript
@@ -11457,12 +11522,12 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:point_of_sale.view_pos_order_filter
 #: model_terms:ir.ui.view,arch_db:point_of_sale.view_report_pos_order_search
 msgid "User"
-msgstr "Pengguna"
+msgstr "User"
 
 #. module: point_of_sale
 #: model:ir.actions.report,name:point_of_sale.report_user_label
 msgid "User Labels"
-msgstr "Label Pengguna"
+msgstr "Label User"
 
 #. module: point_of_sale
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_config__uuid
@@ -11483,7 +11548,7 @@ msgstr "PPN"
 #. module: point_of_sale
 #: model_terms:ir.ui.view,arch_db:point_of_sale.pos_session_sales_details
 msgid "VAT:"
-msgstr ""
+msgstr "PPN:"
 
 #. module: point_of_sale
 #. odoo-javascript
@@ -12413,7 +12478,7 @@ msgstr "order aktif yang direncanakan untuk nanti."
 #. odoo-python
 #: code:addons/point_of_sale/models/pos_config.py:0
 msgid "order"
-msgstr ""
+msgstr "order"
 
 #. module: point_of_sale
 #. odoo-javascript
@@ -12425,7 +12490,7 @@ msgstr "pesanan untuk beberapa hari ke depan:"
 #. odoo-python
 #: code:addons/point_of_sale/models/pos_config.py:0
 msgid "orders"
-msgstr ""
+msgstr "order"
 
 #. module: point_of_sale
 #: model_terms:ir.ui.view,arch_db:point_of_sale.view_pos_preset_form
@@ -12503,6 +12568,72 @@ msgstr "dengan nilai"
 msgid "x"
 msgstr "x"
 
+#~ msgid ""
+#~ "<div style=\"margin: 0; padding: 0; font-size: 14px;\">\n"
+#~ "                    <t t-set=\"client_name\" t-"
+#~ "value=\"object.partner_id.name\"/>\n"
+#~ "                    <t t-set=\"store_name\" t-"
+#~ "value=\"object.config_id.name\"/>\n"
+#~ "                    <t t-set=\"tz\" t-"
+#~ "value=\"object.company_id.partner_id.tz\"/>\n"
+#~ "                    <t t-set=\"lg\" t-value=\"object.partner_id.lang or "
+#~ "user.lang\"/>\n"
+#~ "                    <div>\n"
+#~ "                        <t t-if=\"client_name\">Hello <t t-"
+#~ "out=\"client_name\">Client name</t>,</t>\n"
+#~ "                        <t t-else=\"\">Hello,</t>\n"
+#~ "                    </div>\n"
+#~ "                    <br/>\n"
+#~ "                    <div>Thank you for purchasing from <t t-"
+#~ "out=\"store_name\">Store name</t>!</div>\n"
+#~ "                    <div>Attached, you will find your receipt for the "
+#~ "purchase of <span><t t-out=\"format_datetime(dt=object.date_order, tz=tz, "
+#~ "dt_format=&quot;EEEE d MMMM&quot;,                          lang_code=lg) "
+#~ "or ''\">date</t> <t t-out=\"format_time(time=object.date_order, tz=tz, "
+#~ "time_format='short',                          lang_code=lg)\">time</t>.</"
+#~ "span>\n"
+#~ "                    </div>\n"
+#~ "                    <br/>\n"
+#~ "                    <div>With kind regards,</div>\n"
+#~ "                    <br/>\n"
+#~ "                    <t t-out=\"store_name\">Store name</t>\n"
+#~ "                </div>\n"
+#~ "            "
+#~ msgstr ""
+#~ "<div style=\"margin: 0; padding: 0; font-size: 14px;\">\n"
+#~ "                    <t t-set=\"client_name\" t-"
+#~ "value=\"object.partner_id.name\"/>\n"
+#~ "                    <t t-set=\"store_name\" t-"
+#~ "value=\"object.config_id.name\"/>\n"
+#~ "                    <t t-set=\"tz\" t-"
+#~ "value=\"object.company_id.partner_id.tz\"/>\n"
+#~ "                    <t t-set=\"lg\" t-value=\"object.partner_id.lang or "
+#~ "user.lang\"/>\n"
+#~ "                    <div>\n"
+#~ "                        <t t-if=\"client_name\">Halo <t t-"
+#~ "out=\"client_name\">Nama klien</t>,</t>\n"
+#~ "                        <t t-else=\"\">Halo,</t>\n"
+#~ "                    </div>\n"
+#~ "                    <br/>\n"
+#~ "                    <div>Terima kasih sudah berbelanja di <t t-"
+#~ "out=\"store_name\">Nama toko</t>!</div>\n"
+#~ "                    <div>Terlampir bukti pembelian pada <span><t t-"
+#~ "out=\"format_datetime(dt=object.date_order, tz=tz, dt_format=&quot;EEEE d "
+#~ "MMMM&quot;,                          lang_code=lg) or ''\">tanggal</t> <t "
+#~ "t-out=\"format_time(time=object.date_order, tz=tz, "
+#~ "time_format='short',                          lang_code=lg)\">waktu</t>.</"
+#~ "span>\n"
+#~ "                    </div>\n"
+#~ "                    <br/>\n"
+#~ "                    <div>Salam hangat,</div>\n"
+#~ "                    <br/>\n"
+#~ "                    <t t-out=\"store_name\">Nama toko</t>\n"
+#~ "                </div>\n"
+#~ "            "
+
+#~ msgid "Leave empty to use the receivable account of customer"
+#~ msgstr "Biarkan kosong untuk menggunakan akun piutang pelanggan"
+
 #~ msgid "Bank Statement Line"
 #~ msgstr "Baris Rekening Koran"
 
@@ -12531,15 +12662,6 @@ msgstr "x"
 #~ "Untuk jurnal bank, kami menulis ke akun belum lunas yang ditentukan di "
 #~ "metode pembayaran ini.\n"
 #~ "Hanya jurnal kas dan bank yang diizinkan."
-
-#~ msgid "Create Product"
-#~ msgstr "Buat Produk"
-
-#~ msgid "Install App"
-#~ msgstr "Instal App"
-
-#~ msgid "Print Report"
-#~ msgstr "Cetak Laporan"
 
 #~ msgid ""
 #~ "Whenever you close a session, one entry is generated in the following "

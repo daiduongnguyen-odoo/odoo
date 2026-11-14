@@ -24,9 +24,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 17:41+0000\n"
-"PO-Revision-Date: 2026-10-11 06:33+0000\n"
-"Last-Translator: 张飞虎 <feihu.zhang@live.com>\n"
+"POT-Creation-Date: 2026-11-06 17:38+0000\n"
+"PO-Revision-Date: 2026-10-28 08:03+0000\n"
+"Last-Translator: \"Chloe Wang (chwa)\" <chwa@odoo.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://translate.odoo.com/"
 "projects/odoo-20/website/zh_Hans/>\n"
 "Language: zh_CN\n"
@@ -282,12 +282,6 @@ msgstr "区块数量"
 #: model_terms:ir.ui.view,arch_db:website.s_numbers_charts
 msgid "$ 32M"
 msgstr "$ 32M"
-
-#. module: website
-#. odoo-python
-#: code:addons/website/models/ir_ui_view.py:0
-msgid "%(error)s (website: %(website_id)s)"
-msgstr "%(error)s（网站：%(website_id)s）"
 
 #. module: website
 #. odoo-python
@@ -5096,6 +5090,7 @@ msgstr ""
 
 #. module: website
 #. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/font/add_font_dialog.xml:0
 #: code:addons/website/static/src/builder/plugins/options/header/header_navigation_option.xml:0
 #: code:addons/website/static/src/builder/plugins/theme/theme_font_weight_option.xml:0
 #: code:addons/website/static/src/builder/plugins/theme/theme_tab_plugin.js:0
@@ -6777,6 +6772,8 @@ msgid "Countdown is over - Firework"
 msgstr "倒计时结束 - 烟花"
 
 #. module: website
+#. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/options/visibility_option.xml:0
 #: model:ir.model.fields,field_description:website.field_website_visitor__country_id
 #: model_terms:ir.ui.view,arch_db:website.website_visitor_view_search
 msgid "Country"
@@ -7307,8 +7304,8 @@ msgstr "默认开关复选框输入"
 #. module: website
 #. odoo-python
 #: code:addons/website/models/website.py:0
-msgid "Default website changed"
-msgstr "默认网站已更改"
+msgid "Default website changed to %(default_website_name)s."
+msgstr ""
 
 #. module: website
 #. odoo-javascript
@@ -8083,6 +8080,12 @@ msgstr "双击图标将其替换为您选择的图标。"
 #: code:addons/website/static/src/builder/plugins/options/chart_option.xml:0
 msgid "Doughnut"
 msgstr "甜甜圈"
+
+#. module: website
+#. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/options/popup_option_plugin.js:0
+msgid "Drag blocks here"
+msgstr ""
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.s_mega_menu_dropzone
@@ -9030,6 +9033,12 @@ msgstr "扩展视图"
 #: model:ir.model.fields,field_description:website.field_website_page__xml_id
 msgid "External ID"
 msgstr "外部 ID"
+
+#. module: website
+#. odoo-python
+#: code:addons/website/models/ir_ui_view.py:0
+msgid "External ID can not be loaded: %(error)s (website: %(website_id)s)"
+msgstr ""
 
 #. module: website
 #. odoo-javascript
@@ -11677,7 +11686,7 @@ msgstr "颜色反转"
 #. odoo-javascript
 #: code:addons/website/static/src/client_actions/configurator/configurator.js:0
 msgid "Iris"
-msgstr ""
+msgstr "Iris"
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.s_company_team
@@ -11994,7 +12003,7 @@ msgstr "工作"
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.contactus
 msgid "John Doe"
-msgstr ""
+msgstr "John Doe"
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.s_launch_countdown
@@ -12137,7 +12146,7 @@ msgstr "KPI 网站访问量指标"
 #: model:ir.model.fields,field_description:website.field_website_llms__content
 #: model_terms:ir.ui.view,arch_db:website.res_config_settings_view_form
 msgid "LLMs.txt"
-msgstr ""
+msgstr "LLMs.txt"
 
 #. module: website
 #: model:ir.model,name:website.model_website_llms
@@ -12197,7 +12206,7 @@ msgstr "标签宽度"
 #. odoo-javascript
 #: code:addons/website/static/src/client_actions/configurator/configurator.js:0
 msgid "Lagoon"
-msgstr ""
+msgstr "泻湖"
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.s_ecomm_categories_showcase
@@ -12232,6 +12241,8 @@ msgid "Language from the website when visitor has been created"
 msgstr "创建访问者时网站上的语言"
 
 #. module: website
+#. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/options/visibility_option.xml:0
 #: model:ir.model.fields,field_description:website.field_res_config_settings__language_ids
 #: model:ir.model.fields,field_description:website.field_website__language_ids
 #: model_terms:ir.ui.view,arch_db:website.res_config_settings_view_form
@@ -12555,6 +12566,7 @@ msgstr "库"
 
 #. module: website
 #. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/font/add_font_dialog.xml:0
 #: code:addons/website/static/src/builder/plugins/options/searchbar_option.xml:0
 #: code:addons/website/static/src/builder/plugins/theme/theme_font_weight_option.xml:0
 #: code:addons/website/static/src/builder/plugins/theme/theme_tab_plugin.js:0
@@ -12571,7 +12583,7 @@ msgstr "浅色与深色"
 #. odoo-javascript
 #: code:addons/website/static/src/client_actions/configurator/configurator.js:0
 msgid "Lilac"
-msgstr ""
+msgstr "丁香"
 
 #. module: website
 #: model:ir.model.fields,field_description:website.field_website_snippet_filter__limit
@@ -12794,7 +12806,7 @@ msgstr "低"
 #. odoo-javascript
 #: code:addons/website/static/src/client_actions/configurator/configurator.js:0
 msgid "Luna"
-msgstr ""
+msgstr "Luna"
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.s_bento_grid_avatars
@@ -13189,7 +13201,7 @@ msgstr "合并业务伙伴向导"
 #. odoo-javascript
 #: code:addons/website/static/src/client_actions/configurator/configurator.js:0
 msgid "Merlot"
-msgstr ""
+msgstr "Merlot"
 
 #. module: website
 #. odoo-javascript
@@ -13262,7 +13274,7 @@ msgstr "中间"
 #. odoo-javascript
 #: code:addons/website/static/src/client_actions/configurator/configurator.js:0
 msgid "Midnight"
-msgstr ""
+msgstr "午夜"
 
 #. module: website
 #. odoo-javascript
@@ -16323,6 +16335,7 @@ msgstr "刷新路由的列表"
 #. odoo-javascript
 #: code:addons/website/static/src/builder/plugins/carousel_option.xml:0
 #: code:addons/website/static/src/builder/plugins/content_width_option.xml:0
+#: code:addons/website/static/src/builder/plugins/font/add_font_dialog.xml:0
 #: code:addons/website/static/src/builder/plugins/options/base_visibility_option.xml:0
 #: code:addons/website/static/src/builder/plugins/options/dynamic_snippet_carousel_option.xml:0
 #: code:addons/website/static/src/builder/plugins/options/footer_option.xml:0
@@ -18817,6 +18830,12 @@ msgid "Template fallback"
 msgstr "模板回滚"
 
 #. module: website
+#. odoo-python
+#: code:addons/website/models/ir_ui_view.py:0
+msgid "Template not found: '%(error)s' (website: %(website_id)s)"
+msgstr ""
+
+#. module: website
 #. odoo-javascript
 #: code:addons/website/static/src/builder/plugins/form/form.edit.xml:0
 msgid "Terms & Conditions"
@@ -19091,12 +19110,6 @@ msgid "The form has been sent successfully."
 msgstr "表单已成功发送。"
 
 #. module: website
-#. odoo-python
-#: code:addons/website/controllers/form.py:0
-msgid "The form's specified model does not exist"
-msgstr "表单指定的模型不存在"
-
-#. module: website
 #: model:ir.model.fields,help:website.field_ir_actions_server__website_url
 #: model:ir.model.fields,help:website.field_ir_cron__website_url
 msgid "The full URL to access the server action through the website."
@@ -19208,24 +19221,6 @@ msgstr "该名称用于生成 URL，并显示在浏览器标题栏中"
 #: model:ir.model.fields,help:website.field_website_controller_page__name_slugified
 msgid "The name of the page usable in a URL"
 msgstr "可在 URL 中使用的页面名称"
-
-#. module: website
-#. odoo-python
-#: code:addons/website/models/website.py:0
-msgid "The new default website is %(default_website_name)s."
-msgstr "新的默认网站是 %(default_website_name)s。"
-
-#. module: website
-#. odoo-python
-#: code:addons/website/models/website.py:0
-msgid ""
-"The new default website is %(default_website_name)s. The following default "
-"settings were copied from the old default website to the new one: %"
-"(transferred_settings)s. Note that these settings are still present on the "
-"old default website."
-msgstr ""
-"新的默认网站是 %(default_website_name)s。以下默认设置已从旧的默认网站复制到新"
-"网站：%(transferred_settings)s。请注意，这些设置仍保留在旧的默认网站上。"
 
 #. module: website
 #. odoo-python
@@ -19503,6 +19498,13 @@ msgstr "该字体已存在，只能添加为本地字体，以替换服务器版
 #: code:addons/website/static/src/builder/plugins/theme/theme_font_weight_option.js:0
 msgid "This font is missing font weight"
 msgstr "此字体缺少字重"
+
+#. module: website
+#. odoo-python
+#: code:addons/website/controllers/form.py:0
+msgid ""
+"This form cannot be submitted. Please contact the website administrator."
+msgstr ""
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.bs_debug_view
@@ -20275,6 +20277,24 @@ msgstr "URL 不能以 '#' 开头。"
 #: model:ir.model.fields,field_description:website.field_website_rewrite__url_to
 msgid "URL to"
 msgstr "URL 到"
+
+#. module: website
+#. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/options/visibility_option.xml:0
+msgid "UTM Campaign"
+msgstr ""
+
+#. module: website
+#. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/options/visibility_option.xml:0
+msgid "UTM Medium"
+msgstr ""
+
+#. module: website
+#. odoo-javascript
+#: code:addons/website/static/src/builder/plugins/options/visibility_option.xml:0
+msgid "UTM Source"
+msgstr ""
 
 #. module: website
 #. odoo-javascript
@@ -23816,12 +23836,6 @@ msgid "rows"
 msgstr "行"
 
 #. module: website
-#. odoo-javascript
-#: code:addons/website/static/src/components/resource_editor/resource_editor.xml:0
-msgid "scope.data.label"
-msgstr "scope.data.label"
-
-#. module: website
 #: model_terms:ir.ui.view,arch_db:website.snippets
 msgid ""
 "scrolling, depth, effect, backgrounds, layer, visual, movement, parallax"
@@ -24027,12 +24041,6 @@ msgstr "此页"
 
 #. module: website
 #. odoo-javascript
-#: code:addons/website/static/src/components/resource_editor/resource_editor.xml:0
-msgid "this.state.type === 'xml' ? resource.name : resource.label"
-msgstr ""
-
-#. module: website
-#. odoo-javascript
 #: code:addons/website/static/src/builder/plugins/options/animate_option.xml:0
 msgid "to"
 msgstr "到"
@@ -24073,27 +24081,27 @@ msgstr ""
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.s_achievements_list
 msgid "x3"
-msgstr ""
+msgstr "x3"
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.s_achievements_list
 msgid "x4"
-msgstr ""
+msgstr "x4"
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.s_achievements_list
 msgid "x5"
-msgstr ""
+msgstr "x5"
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.s_achievements_list
 msgid "x6"
-msgstr ""
+msgstr "x6"
 
 #. module: website
 #: model_terms:ir.ui.view,arch_db:website.s_achievements_list
 msgid "x8"
-msgstr ""
+msgstr "x8"
 
 #. module: website
 #. odoo-javascript
@@ -24136,6 +24144,31 @@ msgstr "✽  披萨"
 #: model_terms:ir.ui.view,arch_db:website.s_key_benefits
 msgid "✽  What We Offer"
 msgstr "✽  我们提供的岗位"
+
+#~ msgid "scope.data.label"
+#~ msgstr "scope.data.label"
+
+#~ msgid "%(error)s (website: %(website_id)s)"
+#~ msgstr "%(error)s（网站：%(website_id)s）"
+
+#~ msgid "The form's specified model does not exist"
+#~ msgstr "表单指定的模型不存在"
+
+#~ msgid "Default website changed"
+#~ msgstr "默认网站已更改"
+
+#~ msgid "The new default website is %(default_website_name)s."
+#~ msgstr "新的默认网站是 %(default_website_name)s。"
+
+#~ msgid ""
+#~ "The new default website is %(default_website_name)s. The following "
+#~ "default settings were copied from the old default website to the new one: "
+#~ "%(transferred_settings)s. Note that these settings are still present on "
+#~ "the old default website."
+#~ msgstr ""
+#~ "新的默认网站是 %(default_website_name)s。以下默认设置已从旧的默认网站复制"
+#~ "到新网站：%(transferred_settings)s。请注意，这些设置仍保留在旧的默认网站"
+#~ "上。"
 
 #~ msgid "Arrow Position"
 #~ msgstr "箭头位置"
