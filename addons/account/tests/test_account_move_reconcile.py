@@ -5862,6 +5862,7 @@ class TestAccountMoveReconcile(AccountTestInvoicingCommon):
         invoice = self._create_invoice_one_line(price_unit=500, date='2024-01-01', post=True)
 
         # No outstanding account, so no journal entry on the payment
+        self.inbound_payment_method_line.payment_account_id = False
         with patch.object(self.env.registry['account.move'], '_get_invoice_in_payment_state', lambda _: 'in_payment'):
             payment = self.create_move_payment(invoice, 500)
         self.assertFalse(payment.move_id)
