@@ -126,6 +126,11 @@ a question; a missing section is a review round trip.
   (a GitHub issue this commit closes), `Co-authored-by: Name <email>`. Ask
   the author for the task, ticket, or issue; link what exists and leave the
   trailer out otherwise. Never invent a reference.
+- `Co-authored-by` names a person. Credit no AI tool or agent, in the
+  commit message or in the PR description: no `Co-authored-by: Claude
+  <noreply@anthropic.com>`, `Co-authored-by: Copilot <copilot@github.com>`
+  or "Generated with ..." line. The author answers for the change, whatever
+  tool wrote it. Remove the lines a tool adds by default.
 - Leave generated metadata to the bots: the merge bot adds PR linkage
   (`closes odoo/odoo#123` or `Part-of: odoo/odoo#123`), `Signed-off-by`, and
   `Related: odoo/enterprise#123`. Forward-port tooling adds provenance such as
@@ -202,7 +207,13 @@ a question; a missing section is a review round trip.
   [odoo-stable-policy](../odoo-stable-policy/SKILL.md) skill; a PR
   description explains why, as the commit message
   does, and links the relevant task, ticket, or issue when one exists.
-- A bug fix comes with a test that reproduces it when one is possible.
+- A bug fix comes with a test that reproduces it when one is possible. Run
+  it once on the code without the fix and see it fail: a test that passes
+  either way proves nothing. The same holds for an existing test said to
+  cover the case: it counts only if it fails once the fix is undone. A
+  flaky test made stable by a fix outside the test is not the
+  reproduction: without the fix it only goes back to flaky, which the CI
+  reads as noise. Add a test that fails every time without the fix.
 - The description of a pull request of one commit is not hard-wrapped:
   each paragraph is a single line, also when the description reuses the
   commit body; line breaks only separate paragraphs, list items, trailers and

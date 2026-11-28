@@ -9,7 +9,8 @@ from odoo.addons.l10n_eg_edi_eta.lib.eta_client import ETAClient
 from odoo.addons.l10n_eg_edi_eta.models.eta_submission import ETA_SUBMISSION_STATES
 
 
-ETA_INVOICE_SENDING_BATCH_SIZE = 10
+ETA_TOKEN_DEFAULT_LIFETIME = 3600
+ETA_TOKEN_EXPIRY_MARGIN = 300
 
 ETA_INVOICE_SUBMISSION_STATES = ETA_SUBMISSION_STATES + [('to_send', 'To Send')]
 
@@ -138,15 +139,17 @@ class AccountMove(models.Model):
         if eg_moves.company_id.filtered(lambda c: c.l10n_eg_edi_api_mode == 'demo'):
             raise UserError(self.env._("Cannot fetch PDF if the invoice company's ETA API mode is in Demo."))
 
-        access_data = self._l10n_eg_eta_get_access_token()
-        if access_data.get('error'):
-            raise UserError(self.env._("Failed to authenticate with the ETA server. Please verify your ETA credentials!"))
-
-        access_token = access_data.get('access_token')
         moves_failed_to_fetch = self.env['account.move']
-        for move in eg_moves:
-            if not move._l10n_eg_get_eta_invoice_pdf(access_token):
-                moves_failed_to_fetch |= move
+        for moves in eg_moves.grouped('company_id').values():
+            access_token = expiry_time = None
+            for move in moves:
+                if not expiry_time or expiry_time <= fields.Datetime.now():
+                    access_data = move._l10n_eg_eta_get_access_token()
+                    if access_data.get('error'):
+                        return access_data
+                    access_token, expiry_time = access_data['access_token'], access_data['expiry_time']
+                if not move._l10n_eg_get_eta_invoice_pdf(access_token):
+                    moves_failed_to_fetch |= move
 
         action_to_return = {
             'type': 'ir.actions.client',
@@ -251,26 +254,20 @@ class AccountMove(models.Model):
     def _get_l10n_eg_edi_alerts(self):
         alerts = {}
 
-        if (companies := self.company_id) and len(companies) > 1:
-            alerts.update({
-                'eg_eta_edi_multiple_companiesbranch partner': {
-                    'level': 'danger',
-                    'message': self.env._(
-                        """Only invoices from one company can be signed at a time.
-                        Please select invoices from a single company to sign and send to ETA.""",
-                    ),
-                },
-            })
-        elif companies.l10n_eg_edi_api_mode != 'demo' and (
-            not companies.l10n_eg_client_identifier or not companies.l10n_eg_client_secret
+        if companies := self.company_id.filtered(
+            lambda c: (
+                c.l10n_eg_edi_api_mode != "demo"
+                and (not c.l10n_eg_client_identifier or not c.l10n_eg_client_secret)
+            ),
         ):
             alerts.update({
                 'eg_eta_edi_no_client_id_secret': {
                     'level': 'danger',
                     'message': self.env._(
-                        "Please configure Client ID and Secret Key for the company %s.",
-                        companies[0].name,
+                        "Please configure Client ID and Secret Key for the Company(s)."
                     ),
+                    'action_text': self.env._("View Company(s)"),
+                    'action': companies._get_records_action(),
                 },
             })
 
@@ -281,7 +278,7 @@ class AccountMove(models.Model):
                 'eg_eta_edi_missing_company_address': {
                     'level': 'danger',
                     'message': self.env._("Please fill in the address details for the following Journal Branches"),
-                    'action_text': self.env._("view branches"),
+                    'action_text': self.env._("View branches"),
                     'action': missing_branch_details._get_records_action(),
                 },
             })
@@ -373,13 +370,71 @@ class AccountMove(models.Model):
                 },
             })
 
-        if unsigned_moves := self.filtered(lambda inv: not inv.l10n_eg_is_signed):
+        if (
+            self.env.context.get('check_is_invoice_signed', True)
+            and (unsigned_moves := self.filtered(lambda inv: not inv.l10n_eg_is_signed))
+        ):
             alerts.update({
                 'eg_eta_edi_moves_not_signed': {
                     'level': 'danger',
                     'message': self.env._("Invoice needs to be signed before ETA submission."),
                     'action_text': self.env._("View Invoices"),
                     'action': unsigned_moves._get_records_action(),
+                },
+            })
+
+        export_moves = self.filtered(lambda m: m._l10n_eg_eta_is_export())
+
+        if products_with_invalid_weight := amls_to_check.filtered(
+            lambda line: line.move_id in export_moves
+        ).product_id.filtered(lambda p: p.type == 'consu' and p.weight <= 0):
+            message = self.env._(
+                "All product weights must be greater than 0 for export invoices, as required by the Egyptian Tax Authority (ETA). "
+                "Please update the weight on the product form to proceed."
+            )
+            if not self.env.user.has_group('uom.group_uom'):
+                message += self.env._(
+                    " Make sure to enable the use of Units of Measure in the accounting settings in order to display the weight on products."
+                )
+            alerts.update({
+                'eg_eta_edi_export_products_with_invalid_weight': {
+                    'level': 'danger',
+                    'message': message,
+                    'action_text': self.env._("View Products"),
+                    'action': products_with_invalid_weight.product_tmpl_id._get_records_action(),
+                },
+            })
+
+        if moves_without_delivery_date := export_moves.filtered(lambda m: not m.delivery_date):
+            alerts.update({
+                'eg_eta_edi_export_no_delivery_date': {
+                    'level': 'danger',
+                    'message': self.env._("Please set the delivery date."),
+                    'action_text': self.env._("View Invoices"),
+                    'action': moves_without_delivery_date._get_records_action(),
+                },
+            })
+
+        export_notes = self.filtered(lambda m: m._get_l10n_eg_eta_document_type() in ('ec', 'ed'))
+
+        if notes_without_origin := export_notes.filtered(lambda m: not m._l10n_eg_eta_get_origin_move()):
+            alerts.update({
+                'eg_eta_edi_export_note_without_origin': {
+                    'level': 'danger',
+                    'message': self.env._("Please create this export credit/debit note from the original export invoice."),
+                    'action_text': self.env._("View Invoices"),
+                    'action': notes_without_origin._get_records_action(),
+                },
+            })
+
+        notes_with_origin = export_notes.filtered(lambda m: m._l10n_eg_eta_get_origin_move())
+        if unsent_origins := notes_with_origin.filtered(lambda o: not o.l10n_eg_uuid):
+            alerts.update({
+                'eg_eta_edi_export_origin_not_sent': {
+                    'level': 'danger',
+                    'message': self.env._("Please send the original export invoices to the ETA first."),
+                    'action_text': self.env._("View Invoices"),
+                    'action': unsent_origins._get_records_action(),
                 },
             })
 
@@ -422,11 +477,20 @@ class AccountMove(models.Model):
         )
 
     def _get_l10n_eg_eta_document_type(self):
-        return {
+        document_type = {
             'out_invoice': 'd' if self._fields.get('debit_origin_id') and self.debit_origin_id else 'i',
             'out_refund': 'c',
             'in_refund': 'd',
         }.get(self.move_type, '')
+        if self._l10n_eg_eta_is_export() and document_type:
+            document_type = f"e{document_type}"  # For export type (ei / ec / ed)
+        return document_type
+
+    def _l10n_eg_eta_is_export(self):
+        return self.partner_id.commercial_partner_id.country_code != 'EG'
+
+    def _l10n_eg_eta_get_origin_move(self):
+        return self.reversed_entry_id or (self._fields.get('debit_origin_id') and self.debit_origin_id)  # noqa: OLS03028
 
     def _generate_l10n_eg_edi_json(self, is_demo=False):
 
@@ -478,10 +542,11 @@ class AccountMove(models.Model):
         values_per_grouping_key = AccountTax._aggregate_base_lines_aggregated_values(base_lines_aggregated_values)
 
         date_string = self.invoice_date.strftime('%Y-%m-%dT%H:%M:%SZ')
+        document_type = self._get_l10n_eg_eta_document_type()
         eta_invoice = {
             'issuer': self._l10n_eg_eta_prepare_address_data(self.journal_id.l10n_eg_branch_id, issuer=True),
             'receiver': self._l10n_eg_eta_prepare_address_data(self.partner_id),
-            'documentType': self._get_l10n_eg_eta_document_type(),
+            'documentType': document_type,
             'documentTypeVersion': '1.0',
             'dateTimeIssued': date_string,
             'taxpayerActivityCode': self.journal_id.l10n_eg_activity_type_id.code,
@@ -506,6 +571,10 @@ class AccountMove(models.Model):
             eta_invoice['purchaseOrderReference'] = self.ref
         if self.invoice_origin:
             eta_invoice['salesOrderReference'] = self.invoice_origin
+        if document_type in ['ec', 'ed'] and (origin := self._l10n_eg_eta_get_origin_move()):
+            eta_invoice['references'] = [origin.l10n_eg_uuid]
+        if document_type in ['i', 'ei', 'ec', 'ed'] and self.delivery_date:
+            eta_invoice['serviceDeliveryDate'] = self.delivery_date.strftime('%Y-%m-%d')
         # If the invoice is being generated in test mode, append a dummy signature to it
         if is_demo:
             eta_invoice['signatures'] = [{'i': 'i'}]
@@ -518,6 +587,7 @@ class AccountMove(models.Model):
             'discount_total': 0.0,
             'total_price_subtotal_before_discount': 0.0,
         }
+        weight_uom = self.env['product.template']._get_weight_uom_id_from_ir_config_parameter()
         for base_line, aggregated_values in base_lines_aggregated_values:
             line = base_line['record']
             tax_details = base_line['tax_details']
@@ -571,6 +641,14 @@ class AccountMove(models.Model):
             if self.currency_id != self.env.ref('base.EGP'):
                 lines[-1]['unitValue']['currencyExchangeRate'] = self._l10n_eg_edi_round(self._l10n_eg_edi_exchange_currency_rate())
                 lines[-1]['unitValue']['amountSold'] = line.price_unit
+            if self._l10n_eg_eta_is_export():
+                quantity = line.product_uom_id._compute_quantity(line.quantity, line.product_id.uom_id, round=False)
+                weight_quantity = 0.01 if line.product_id.type != 'consu' else line.product_id.weight * quantity
+                lines[-1]['weightUnitType'] = {
+                    self.env.ref('uom.product_uom_kgm'): 'KGM',
+                    self.env.ref('uom.product_uom_lb'): 'LB',
+                }.get(weight_uom)
+                lines[-1]['weightQuantity'] = self._l10n_eg_edi_round(weight_quantity)
         return lines, totals
 
     def _l10n_eg_eta_prepare_address_data(self, partner, issuer=False):
@@ -598,16 +676,21 @@ class AccountMove(models.Model):
         """
         ETA Supports sending multiple invoices to it and they send back a response containing results
         for all the invoices sent to it.
-        So we send multiple invoices to ETA in a fix batch size and process their responses.
+        So we send multiple invoices to ETA in a fix batch size and process their responses, grouped by company, since
+        the client id and secret will be different for each company.
+        The access token is valid for an hour, so it is fetched once per company and renewed only
+        when it is about to expire.
         """
-        for i in range(0, len(self.ids), ETA_INVOICE_SENDING_BATCH_SIZE):
-            batch = self[i:i + ETA_INVOICE_SENDING_BATCH_SIZE]
-            if error := batch._l10n_eg_eta_send_invoice(notify=notify):
+        for invoices in self.grouped('company_id').values():
+            if error := invoices._l10n_eg_eta_send_invoice(notify=notify):
                 return error
 
     def _l10n_eg_eta_send_invoice(self, notify=False):
-        if (access_data := self._l10n_eg_eta_get_access_token()) and access_data.get('error'):
+        """Submit the invoices to ETA and process the response. Returns the error payload, if any."""
+        access_data = self._l10n_eg_eta_get_access_token()
+        if access_data.get('error'):
             return access_data
+        access_token = access_data['access_token']
         request_invoices = {
             inv.id: json.loads(inv.l10n_eg_eta_json_doc_file.content)['request']
             for inv in self
@@ -617,14 +700,14 @@ class AccountMove(models.Model):
             ensure_ascii=False,
             indent=4,
         ).encode('utf-8')
-        headers = self._l10n_eg_edi_prepare_headers(access_data.get('access_token'))
+        headers = self._l10n_eg_edi_prepare_headers(access_token)
         client = ETAClient(
-            is_production=self.l10n_eg_edi_api_mode == 'production'
+            is_production=self.company_id.l10n_eg_edi_api_mode == 'production'
         )
 
         content = client.submit_invoices(
             body=body,
-            headers=headers
+            headers=headers,
         )
 
         data = json.loads(content)
@@ -741,25 +824,31 @@ class AccountMove(models.Model):
                 'message': self.env._("The selected invoices are not yet valid to be cancelled on ETA."),
             })
             return
-        for move in eg_moves:
-            if move.l10n_eg_edi_api_mode == 'demo':
-                move._l10n_eg_edi_post_cancel(cancel_reason, notify)
-            else:
-                move._l10n_eg_edi_process_cancel_invoice(cancel_reason, notify)
+        for moves in eg_moves.grouped('company_id').values():
+            access_token = expiry_time = None
+            for move in moves:
+                if move.l10n_eg_edi_api_mode == 'demo':
+                    move._l10n_eg_edi_post_cancel(cancel_reason, notify)
+                    continue
+                if not expiry_time or expiry_time <= fields.Datetime.now():
+                    access_data = move._l10n_eg_eta_get_access_token()
+                    if access_data.get('error'):
+                        return access_data
+                    access_token, expiry_time = access_data['access_token'], access_data['expiry_time']
+                move.with_context(access_token=access_token)._l10n_eg_edi_process_cancel_invoice(cancel_reason, notify)
 
     def _l10n_eg_edi_process_cancel_invoice(self, cancel_reason, notify=False):
         self.ensure_one()
-        access_data = self._l10n_eg_eta_get_access_token()
-        if error := access_data.get('error'):
-            raise UserError(self.env._(
-                "Error occured while fetching access token: [%(code)s] %(message)s",
-                code=error.get('code'),
-                message=error.get('message'),
-            ))
         if self.l10n_eg_edi_submission_state == 'cancel':
             raise UserError(self.env._("Cannot cancel an invoice which is already cancelled !"))
 
-        headers = self._l10n_eg_edi_prepare_headers(access_data.get('access_token'))
+        access_token = self.env.context.get('access_token')
+        if not access_token:
+            access_data = self._l10n_eg_eta_get_access_token()
+            if access_data.get('error'):
+                return
+            access_token = access_data['access_token']
+        headers = self._l10n_eg_edi_prepare_headers(access_token)
         body = json.dumps({'status': 'cancelled', 'reason': cancel_reason}).encode()
 
         client = ETAClient(
@@ -773,7 +862,7 @@ class AccountMove(models.Model):
         )
 
         data = json.loads(content or "{}")
-        if data.get('error'):
+        if isinstance(data, dict) and data.get('error'):
             error = data.get('error', {})
             raise UserError(self.env._(
                 "Error occured when trying to cancel invoice: [%(code)s] %(message)s",
@@ -822,7 +911,7 @@ class AccountMove(models.Model):
         body = {'grant_type': 'client_credentials', 'client_id': user, 'client_secret': secret}
 
         client = ETAClient(
-            is_production=self.l10n_eg_edi_api_mode == 'production',
+            is_production=self.company_id.l10n_eg_edi_api_mode == 'production',
         )
 
         content = client.get_access_token(
@@ -833,4 +922,16 @@ class AccountMove(models.Model):
         data = json.loads(content)
         if data.get('error'):
             return data
-        return {'access_token': data.get('access_token')}
+        try:
+            expires_in = int(data.get('expires_in', ETA_TOKEN_DEFAULT_LIFETIME))
+        except (TypeError, ValueError):
+            expires_in = ETA_TOKEN_DEFAULT_LIFETIME
+        # The token is considered expired slightly ahead of time, so that one picked up here does
+        # not expire while the request it is used for is in flight.
+        return {
+            'access_token': data.get('access_token'),
+            'expiry_time': fields.Datetime.add(
+                fields.Datetime.now(),
+                seconds=max(expires_in - ETA_TOKEN_EXPIRY_MARGIN, 0),
+            ),
+        }

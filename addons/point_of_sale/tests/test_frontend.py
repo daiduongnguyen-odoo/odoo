@@ -910,13 +910,39 @@ class TestUi(TestPointOfSaleHttpCommon):
         self.main_pos_config.write({
             'fallback_nomenclature_id': default_nomenclature_id
         })
-        self.env['product.product'].create({
+        product_1 = self.env['product.product'].create({
             'name': 'Product 1',
             'available_in_pos': True,
             'list_price': 10,
             'taxes_id': False,
             'barcode': '08431673020125',
         })
+
+        pack_of_6, pack_of_12 = self.env['uom.uom'].create([
+            {
+                'name': 'Pack of 6',
+                'relative_factor': 6,
+                'relative_uom_id': self.env.ref('uom.product_uom_unit').id,
+                'is_pos_groupable': True,
+            }, {
+                'name': 'Pack of 12',
+                'relative_factor': 12,
+                'relative_uom_id': self.env.ref('uom.product_uom_unit').id,
+                'is_pos_groupable': True,
+            }
+        ])
+        # Stored with and without leading 0
+        self.env['product.uom'].create([
+            {
+                'barcode': '12345678901200',
+                'product_id': product_1.id,
+                'uom_id': pack_of_6.id,
+            }, {
+                'barcode': '9999999999987',
+                'product_id': product_1.id,
+                'uom_id': pack_of_12.id,
+            }
+        ])
 
         self.env['product.product'].create({
             'name': 'Product 2',
@@ -1412,9 +1438,15 @@ class TestUi(TestPointOfSaleHttpCommon):
 
     def test_customer_popup(self):
         """Verify that the customer popup search & inifnite scroll work properly"""
-        # Preload enough partners to make the list scrollable without loading the new ones yet
-        self.env['ir.config_parameter'].sudo().set_int('point_of_sale.limited_customer_count', 15)
-        self.env["res.partner"].create([{"name": "Z partner to search"}, {"name": "Z partner to scroll"}])
+        # Fillers make the preloaded list scrollable even without demo data
+        self.env["res.partner"].create([{"name": f"A filler partner {i}"} for i in range(15)])
+        partner_scroll = self.env["res.partner"].create({"name": "Z partner to scroll"})
+        self.env["res.partner"].create({"name": "Z partner to search"})
+        # Preload exactly the partners sorted before the "Z" ones, so they are only loaded on search/scroll
+        icp = self.env['ir.config_parameter'].sudo()
+        icp.set_int('point_of_sale.limited_customer_count', self.env['res.partner'].sudo().search_count([]))
+        ordered_ids = [row[0] for row in self.main_pos_config.get_limited_partners_loading()]
+        icp.set_int('point_of_sale.limited_customer_count', ordered_ids.index(partner_scroll.id))
         self.main_pos_config.with_user(self.pos_user).open_ui()
         self.start_tour("/pos/ui/%d" % self.main_pos_config.id, 'CustomerPopupTour', login="pos_user")
 

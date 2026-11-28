@@ -52,7 +52,7 @@ class SaleOrderLine(models.Model):
     def _prepare_base_line_for_taxes_computation(self, **kwargs):
         """Override to add the special_type on coupon lines."""
         self.ensure_one()
-        if self.reward_id and self.reward_id.reward_type == "discount":
+        if self.reward_id and self.reward_id.sudo().reward_type == "discount":
             kwargs["special_type"] = "loyalty_discount"
         return super()._prepare_base_line_for_taxes_computation(**kwargs)
 
@@ -68,7 +68,7 @@ class SaleOrderLine(models.Model):
         return super()._can_be_invoiced_alone() and not self.is_reward_line
 
     def _is_discount_line(self):
-        return super()._is_discount_line() or self.reward_id.reward_type == "discount"
+        return super()._is_discount_line() or self.reward_id.sudo().reward_type == "discount"
 
     def _reset_loyalty(self, complete=False):
         """Reset the line(s) to a state which does not impact reward computation.

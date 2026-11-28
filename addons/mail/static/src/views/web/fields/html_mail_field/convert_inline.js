@@ -47,9 +47,11 @@ const RE_THEME_COLOR_CLASS = /^bg-o-color-\d+$/;
 const VERTICAL_ALIGNS = {
     start: "top",
     "flex-start": "top",
+    "flow-start": "top", // Computed `flex-start` since Chrome 158
     center: "middle",
     end: "bottom",
     "flex-end": "bottom",
+    "flow-end": "bottom", // Computed `flex-end` since Chrome 158
     baseline: "bottom",
 };
 const CONVERT_INLINE_BLACKLIST_CLASSES = ["o_mail_redirect"];
@@ -1251,8 +1253,10 @@ export function formatTables(element) {
             parent = parent.parentElement;
             height = parent.style.getPropertyValue("height");
         }
-        if (parent) {
-            parent.style.setProperty("height", parent.getBoundingClientRect().height);
+        if (parent && !height) {
+            // A 0 height lets the children resolve their percent heights while
+            // the cell still grows with its content.
+            parent.style.setProperty("height", "0");
         }
     }
     // Align self and justify content don't work on table cells.

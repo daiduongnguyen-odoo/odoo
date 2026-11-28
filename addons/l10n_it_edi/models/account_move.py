@@ -357,6 +357,9 @@ class AccountMove(models.Model):
             # from products, while in Italian EDI, taxes are generally explicited in the XML file
             # while the product may not be labelled exactly the same as in the database.
             def decoder(invoice, file_data, new=False):
+                if invoice.invoice_line_ids:
+                    return invoice._reason_cannot_decode_has_invoice_lines()
+
                 self.with_context(disable_onchange_name_predictive=['all'])._l10n_it_edi_import_invoice(invoice, file_data, new)
             return {
                 'priority': 20,
@@ -1548,7 +1551,7 @@ class AccountMove(models.Model):
             else:
                 message = _("Withholding tax not found")
             if message:
-                message_to_log.append(Markup("%s<br/>%s") % (message, self._compose_info_message(body_tree, '.')))
+                message_to_log.append(Markup("%s<br/>%s") % (message, self._compose_info_message(withholding, '.')))
 
         extra_info["withholding_taxes"] = withholding_taxes
 
@@ -1575,7 +1578,7 @@ class AccountMove(models.Model):
             else:
                 message_to_log.append(Markup("%s<br/>%s") % (
                     _("Pension Fund tax not found"),
-                    self.env['account.move']._compose_info_message(body_tree, '.'),
+                    self._compose_info_message(pension_fund, '.'),
                 ))
         extra_info["pension_fund_taxes"] = pension_fund_taxes
 
@@ -1909,7 +1912,10 @@ class AccountMove(models.Model):
 
             for message in message_to_log:
                 self.sudo().message_post(body=message)
-            return self
+
+        # Generate a PDF preview of the bill when the XML doesn't embed one, as for UBL/CII imports.
+        self.env['account.edi.ubl']._import_attachments(self, tree)
+        return self
 
     @api.model
     def _is_prediction_enabled(self):
@@ -2486,7 +2492,7 @@ class AccountMove(models.Model):
         if proxy_user.edi_mode == 'demo':
             for move in self:
                 filename = move.l10n_it_edi_attachment_name or '???'
-                self._l10n_it_edi_write_send_state(
+                move._l10n_it_edi_write_send_state(
                     transformed_notification={
                         'l10n_it_edi_state': 'forwarded',
                         'l10n_it_edi_transaction': f'demo_{uuid.uuid4()}',

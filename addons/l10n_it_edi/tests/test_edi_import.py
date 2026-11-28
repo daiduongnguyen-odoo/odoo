@@ -13,6 +13,7 @@ from odoo.exceptions import ValidationError
 from odoo.tests import new_test_user, tagged
 
 from odoo.addons.l10n_it_edi.tests.common import TestItEdi
+from odoo.addons.base.tests.files import PDF_RAW
 from odoo.addons.account_edi_proxy_client.tests.test_account_edi_proxy_client import TestAccountEdiProxyUser
 
 import logging
@@ -458,6 +459,24 @@ class TestItEdiImport(TestItEdi, TestAccountEdiProxyUser):
             ('res_field', '=', 'l10n_it_edi_attachment_file'),
         ])
         self.assertEqual(len(attachments), 1)
+
+    def test_receive_bill_on_invoice_with_lines(self):
+        """ Posting a FatturaPA file in the chatter of an invoice that already has lines must not decode it """
+        bill = self._assert_import_invoice('IT01234567890_FPR01.xml', [{
+            'move_type': 'in_invoice',
+            'amount_untaxed': 5.0,
+        }])
+        existing_lines = bill.invoice_line_ids
+
+        with tools.file_open(f'{self.module}/tests/import_xmls/IT01234567890_FPR01.xml', mode='rb') as fd:
+            attachment = self.env['ir.attachment'].create({
+                'name': 'IT01234567890_FPR01.xml',
+                'raw': fd.read(),
+            })
+        bill.message_post(message_type='comment', attachment_ids=attachment.ids)
+
+        self.assertEqual(bill.invoice_line_ids, existing_lines)
+        self.assertTrue(bill.message_ids.filtered(lambda m: m.body and "The invoice already contains lines." in m.body))
 
     def test_receive_bill_with_global_discount(self):
         applied_xml = """
@@ -1156,3 +1175,21 @@ class TestItEdiImport(TestItEdi, TestAccountEdiProxyUser):
             "A FatturaPA seller with no VAT number must not match any existing partner "
             "(including partners with '/' as a placeholder VAT). A new partner should be created.",
         )
+
+    def test_generate_pdf_when_xml_does_not_provide_one(self):
+
+        report_cls = self.env.registry['ir.actions.report']
+        pre_render_qweb_pdf = report_cls._pre_render_qweb_pdf
+
+        def _pre_render_qweb_pdf(self, *args, **kwargs):
+            return pre_render_qweb_pdf(self.with_context(force_report_rendering=True), *args, **kwargs)
+
+        def _run_pdf_engine_without_processing(*args, **kwargs):
+            return PDF_RAW
+
+        with (
+            patch.object(report_cls, '_pre_render_qweb_pdf', _pre_render_qweb_pdf),
+            patch.object(report_cls, '_run_pdf_engine_without_processing', _run_pdf_engine_without_processing),
+        ):
+            invoice = self._assert_import_invoice('IT01234567890_FPR01.xml', [{'move_type': 'in_invoice'}])
+            self.assertEqual(invoice.message_main_attachment_id.mimetype, 'application/pdf')

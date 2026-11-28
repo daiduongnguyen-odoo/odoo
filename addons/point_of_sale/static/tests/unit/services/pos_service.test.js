@@ -1,11 +1,13 @@
 import { test, expect, describe } from "@odoo/hoot";
+import { advanceTime } from "@odoo/hoot-mock";
 import { getFilledOrder, setupPosEnv, createPaymentLine } from "../utils";
 import { definePosModels } from "../data/generate_model_definitions";
-import { ConnectionLostError } from "@web/core/network/rpc";
+import { ConnectionLostError, rpcBus } from "@web/core/network/rpc";
 import {
     getStrNotes,
     filterChangeByCategories,
 } from "@point_of_sale/app/models/utils/order_change";
+import { downloadFile } from "@web/core/network/download";
 import { prepareRoundingVals } from "../accounting/utils";
 import { getService, patchWithCleanup } from "@web/../tests/web_test_helpers";
 import { localization } from "@web/core/l10n/localization";
@@ -276,6 +278,124 @@ describe("pos_store.js", () => {
             expect(secondPayload.lines[0][0]).toBe(1);
         });
 
+        test("order is synced again once a lost sync request is followed by a successful heartbeat", async () => {
+            const store = await setupPosEnv();
+            const order = await getFilledOrder(store);
+
+            let syncCallCount = 0;
+            const originalCall = store.data.call.bind(store.data);
+            store.data.call = async (model, method, args, kwargs) => {
+                if (model === "pos.order" && method === "sync_from_ui") {
+                    syncCallCount += 1;
+                    if (syncCallCount === 1) {
+                        const error = new ConnectionLostError("/web/dataset/call_kw");
+                        rpcBus.trigger("RPC:RESPONSE", {
+                            data: { params: { model, method } },
+                            settings: {},
+                            error,
+                        });
+                        throw error;
+                    }
+                }
+                return originalCall(model, method, args, kwargs);
+            };
+
+            await store.syncAllOrders({ orders: [order] });
+            expect(store.data.network.offline).toBe(false);
+            expect(order.isSynced).toBe(false);
+
+            await advanceTime(1000);
+            expect(syncCallCount).toBe(1);
+
+            await advanceTime(10000);
+            await advanceTime(1000);
+
+            expect(syncCallCount).toBe(2);
+            expect(order.isSynced).toBe(true);
+            expect(store.getPendingOrder().orderToCreate).toHaveLength(0);
+        });
+
+        test("an updated order is synced again once a lost sync request is followed by a successful heartbeat", async () => {
+            const store = await setupPosEnv();
+            const order = await getFilledOrder(store);
+            await store.syncAllOrders({ orders: [order] });
+            expect(order.isSynced).toBe(true);
+            await store.addLineToOrder(
+                { product_tmpl_id: store.models["product.template"].get(5), qty: 1 },
+                order
+            );
+            expect(order.isDirty()).toBe(true);
+
+            let syncCallCount = 0;
+            const originalCall = store.data.call.bind(store.data);
+            store.data.call = async (model, method, args, kwargs) => {
+                if (model === "pos.order" && method === "sync_from_ui") {
+                    syncCallCount += 1;
+                    if (syncCallCount === 1) {
+                        const error = new ConnectionLostError("/web/dataset/call_kw");
+                        rpcBus.trigger("RPC:RESPONSE", {
+                            data: { params: { model, method } },
+                            settings: {},
+                            error,
+                        });
+                        throw error;
+                    }
+                }
+                return originalCall(model, method, args, kwargs);
+            };
+
+            await store.syncAllOrders({ orders: [order] });
+            expect(order.isDirty()).toBe(true);
+
+            await advanceTime(10000);
+            await advanceTime(1000);
+
+            expect(syncCallCount).toBe(2);
+            expect(order.isDirty()).toBe(false);
+        });
+
+        test("a pending order deletion is sent only once", async () => {
+            const store = await setupPosEnv();
+            const order = await getFilledOrder(store);
+            await store.syncAllOrders({ orders: [order] });
+            expect(order.isSynced).toBe(true);
+            const orderId = order.id;
+
+            const cancelCalls = [];
+            const originalCall = store.data.call.bind(store.data);
+            store.data.call = async (model, method, args, kwargs) => {
+                if (model === "pos.order" && method === "cancel_order_from_pos") {
+                    cancelCalls.push(args[0]);
+                }
+                return originalCall(model, method, args, kwargs);
+            };
+
+            store.removeOrder(order);
+            await advanceTime(200);
+            await store.syncAllOrders();
+
+            expect(cancelCalls).toEqual([[orderId]]);
+            expect(store.getOrderIdsToDelete()).toEqual([]);
+        });
+
+        test("a lost pending order deletion does not prevent orders from being synced", async () => {
+            const store = await setupPosEnv();
+            const order = await getFilledOrder(store);
+            store.addPendingOrder([999], true);
+
+            const originalCall = store.data.call.bind(store.data);
+            store.data.call = async (model, method, args, kwargs) => {
+                if (model === "pos.order" && method === "cancel_order_from_pos") {
+                    throw new ConnectionLostError("/web/dataset/call_kw");
+                }
+                return originalCall(model, method, args, kwargs);
+            };
+
+            await store.syncAllOrders({ orders: [order] });
+            expect(order.isSynced).toBe(true);
+            expect(store.getOrderIdsToDelete()).toEqual([999]);
+        });
+
         test("insync order should not be re-synced", async () => {
             const store = await setupPosEnv();
             const order = await getFilledOrder(store);
@@ -338,6 +458,26 @@ describe("pos_store.js", () => {
         expect(lastOrderLine.attribute_value_ids).toHaveLength(1);
         expect(lastOrderLine.attribute_value_ids[0].id).toBe(12);
         expect(lastOrderLine.attribute_value_ids[0].name).toBe("Male");
+        expect(lastOrderLine.getFullProductName()).toBe("Single attribute");
+    });
+
+    test("addLineToCurrentOrder names the line with chosen and custom attribute values", async () => {
+        const store = await setupPosEnv();
+        store.setOrder(null);
+        const cake = store.models["product.template"].get(51);
+
+        await store.addLineToCurrentOrder({
+            product_tmpl_id: cake,
+            payload: {
+                attribute_value_ids: [5, 7],
+                attribute_custom_values: { 7: "Happy birthday" },
+                price_extra: 0,
+                qty: 1,
+            },
+        });
+        expect(store.getOrder().lines[0].getFullProductName()).toBe(
+            "Cake (Chocolate, Customization: Yes: Happy birthday)"
+        );
     });
 
     test("getPreparationChangesNoPrepCateg", async () => {
@@ -687,6 +827,40 @@ describe("pos_store.js", () => {
         grouped = store.productToDisplayByCateg;
         expect(grouped).toHaveLength(1);
         expect(grouped[0][1].map((p) => p.id)).not.toInclude(specialProduct.id);
+    });
+
+    test("productToDisplayByCateg follows the category sequence tree", async () => {
+        const store = await setupPosEnv();
+        store.config.iface_group_by_categ = true;
+        const categories = store.models["pos.category"];
+        const products = store.models["product.template"];
+        const createCateg = (name, sequence, parent) =>
+            categories.create({ name, sequence, parent_id: parent?.id });
+        const rootA = createCateg("seq_root_a", -30);
+        const rootB = createCateg("seq_root_b", -20);
+        const childA2 = createCateg("seq_child_a2", 2, rootA);
+        const childA1 = createCateg("seq_child_a1", 1, rootA);
+        const childB1 = createCateg("seq_child_b1", 1, rootB);
+        for (const categ of [rootA, rootB, childA2, childA1, childB1]) {
+            products.create({
+                name: `${categ.name}_product`,
+                pos_categ_ids: [categ.id],
+                active: true,
+                available_in_pos: true,
+            });
+        }
+        const expectedIds = [rootA, childA1, childA2, rootB, childB1].map((c) => c.id);
+        const groupedIds = (grouped) =>
+            grouped.map(([id]) => id).filter((id) => expectedIds.includes(id));
+
+        expect(groupedIds(store.productToDisplayByCateg)).toEqual(expectedIds);
+
+        store.selectedCategory = rootA;
+        expect(groupedIds(store.productToDisplayByCateg)).toEqual([
+            rootA.id,
+            childA1.id,
+            childA2.id,
+        ]);
     });
 
     test("productToDisplayByCateg count", async () => {
@@ -1156,6 +1330,7 @@ describe("pos_store.js", () => {
             patchWithCleanup(store.dialog, {
                 add(component, props) {
                     expect.step(props.title);
+                    props.cancel();
                 },
             });
 
@@ -1163,6 +1338,92 @@ describe("pos_store.js", () => {
             expect.verifySteps(["Reload Data"]);
             expect(store.models["pos.order"].get(order.id)).toBe(order);
             expect(order.isSynced).toBe(false);
+        });
+
+        const getPaidOrder = async (store) => {
+            const order = await getFilledOrder(store);
+            order.state = "paid";
+            store.models["pos.payment"].create({
+                amount: order.priceIncl,
+                pos_order_id: order,
+                payment_method_id: store.models["pos.payment.method"].find(
+                    (m) => m.name === "Cash"
+                ),
+            });
+            return order;
+        };
+        const reloadAndExport = async (store) => {
+            let file;
+            patchWithCleanup(store.data, {
+                async resetIndexedDB() {
+                    throw new Error("stop before leaving the page");
+                },
+            });
+            patchWithCleanup(store.dialog, {
+                add(component, props) {
+                    props.confirm();
+                },
+            });
+            patchWithCleanup(downloadFile, {
+                _download(data) {
+                    file = JSON.parse(data);
+                },
+            });
+            await expect(store.reloadData()).rejects.toThrow("stop before leaving the page");
+            return file;
+        };
+
+        test("exports the unsynced paid orders before reloading", async () => {
+            const store = await setupPosEnv();
+            const order = await getPaidOrder(store);
+            store.data.network.offline = true;
+            // Hoot stubs the IndexedDB layer, use the real synchronization
+            patchWithCleanup(store.data, {
+                synchronizeLocalDataInIndexedDB() {
+                    return this._synchronizeLocalDataInIndexedDB();
+                },
+            });
+
+            const file = await reloadAndExport(store);
+            expect(file["pos.order"].map((o) => o.uuid)).toEqual([order.uuid]);
+            expect(file["pos.order.line"].length).toBe(2);
+            expect(file["pos.payment"].length).toBe(1);
+        });
+
+        test("exports the unsynced paid orders when IndexedDB fails", async () => {
+            const store = await setupPosEnv();
+            const order = await getPaidOrder(store);
+            store.data.network.offline = true;
+            patchWithCleanup(store.data, {
+                synchronizeLocalDataInIndexedDB() {
+                    return this._synchronizeLocalDataInIndexedDB();
+                },
+            });
+            patchWithCleanup(store.data.indexedDB, {
+                async create() {
+                    return [{ status: "rejected", reason: "IndexedDB transaction timeout" }];
+                },
+            });
+
+            const file = await reloadAndExport(store);
+            expect(file["pos.order"].map((o) => o.uuid)).toEqual([order.uuid]);
+            expect(file["pos.order.line"].length).toBe(2);
+            expect(file["pos.payment"].length).toBe(1);
+        });
+
+        test("an empty paid order does not block the reload", async () => {
+            const store = await setupPosEnv();
+            const order = store.addNewOrder();
+            order.state = "paid";
+            patchWithCleanup(store.data, {
+                async resetIndexedDB() {
+                    expect.step("resetIndexedDB");
+                    throw new Error("stop before leaving the page");
+                },
+            });
+
+            await expect(store.reloadData()).rejects.toThrow("stop before leaving the page");
+            expect.verifySteps(["resetIndexedDB"]);
         });
 
         test("syncs a paid order before wiping local data", async () => {

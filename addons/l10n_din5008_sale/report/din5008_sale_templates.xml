@@ -51,7 +51,7 @@
 
             <t t-set="din5008_address_block">
                 <tr t-if="doc and doc._name=='sale.order'">
-                    <t t-set="commercial_partner" t-value="doc.partner_id.commercial_partner_id"/>
+                    <t t-set="commercial_partner" t-value="doc.partner_id"/>
                     <t t-set="invoice_partner" t-value="doc.partner_invoice_id"/>
                     <t t-set="delivery_partner" t-value="doc.partner_shipping_id"/>
 
@@ -130,8 +130,11 @@
             </t>
         </xpath>
         <!--adding currency to unit price-->
-        <xpath expr="//td[@name='td_product_priceunit']/span" position="attributes">
-            <attribute name="t-options"  >{"widget": "monetary", "display_currency": line.currency_id}</attribute>
+        <xpath expr="//td[@name='td_product_priceunit']/span[@t-field='line.price_unit']" position="attributes">
+            <attribute name="t-options">{"widget": "monetary", "display_currency": line.currency_id}</attribute>
+        </xpath>
+        <xpath expr="//td[@name='td_product_priceunit']/span[@t-out]" position="attributes">
+            <attribute name="t-options">{"widget": "monetary", "display_currency": line.currency_id}</attribute>
         </xpath>
     </template>
 </odoo>

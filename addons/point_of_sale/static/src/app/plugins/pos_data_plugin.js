@@ -55,6 +55,7 @@ export class PosDataPlugin extends Plugin {
         this.records = {};
         this.connectivity = {
             failedAttempts: 0,
+            requestLostAt: 0,
             promises: new Map(),
             current: null,
             timeout: null,
@@ -92,7 +93,10 @@ export class PosDataPlugin extends Plugin {
 
     scheduleHeartbeat() {
         clearTimeout(this.connectivity.timeout);
-        const probablyOffline = this.connectivity.failedAttempts || this.network.offline;
+        const probablyOffline =
+            this.connectivity.failedAttempts ||
+            this.network.offline ||
+            this.connectivity.requestLostAt;
         const delay = probablyOffline ? HEARTBEAT_RETRY_INTERVAL : HEARTBEAT_INTERVAL;
         this.connectivity.timeout = setTimeout(() => this.heartbeat(), delay);
     }
@@ -102,10 +106,15 @@ export class PosDataPlugin extends Plugin {
             return;
         }
         if (error instanceof ConnectionLostError) {
+            this.connectivity.requestLostAt ||= Date.now();
             if (!this.connectivity.failedAttempts) {
                 this.heartbeat();
             }
-        } else if (this.network.offline) {
+        } else if (
+            this.network.offline ||
+            (this.connectivity.requestLostAt &&
+                Date.now() - this.connectivity.requestLostAt >= HEARTBEAT_RETRY_INTERVAL)
+        ) {
             this.heartbeat();
         } else {
             this.connectivity.failedAttempts = 0;
@@ -162,11 +171,16 @@ export class PosDataPlugin extends Plugin {
         this.connectivity.failedAttempts = 0;
         this.network.warningTriggered = false;
 
-        // Back online detection is based on whether the network was previously offline.
+        // Back online detection is based on whether the network was previously offline
+        // or a request was lost a while ago.
         // Its used to know when dispatching the "pos-network-online" event.
-        const backOnline = this.network.offline;
+        const { requestLostAt } = this.connectivity;
+        const backOnline =
+            this.network.offline ||
+            (requestLostAt && Date.now() - requestLostAt >= HEARTBEAT_RETRY_INTERVAL);
+        this.network.offline = false;
         if (backOnline) {
-            this.network.offline = false;
+            this.connectivity.requestLostAt = 0;
         }
         this.scheduleHeartbeat();
 
@@ -277,20 +291,17 @@ export class PosDataPlugin extends Plugin {
 
         for (const [model, params] of modelsParams) {
             if (!params.getRecordsBasedOnLines) {
-                const data = this.models[model].getAll();
-                const recordsToPut = data.filter((record) => !params.condition(record));
+                const records = this.models[model].getAll();
+                const recordsToPut = records.filter((record) => !params.condition(record));
 
                 if (model === "pos.order.line") {
                     orderlinesToKeep = recordsToPut;
                 }
 
-                data[model] = recordsToPut;
+                data[model] = recordsToPut.map((r) => r.serializeForIndexedDB());
 
                 if (recordsToPut.length) {
-                    await this.indexedDB.create(
-                        model,
-                        recordsToPut.map((r) => r.serializeForIndexedDB())
-                    );
+                    await this.indexedDB.create(model, data[model]);
                     dataToKeep[model] = recordsToPut.map((r) => r[params.key]);
                 }
             }
@@ -305,12 +316,9 @@ export class PosDataPlugin extends Plugin {
                         ...new Map(recordsToPut.map((r) => [r[params.key], r])).values(),
                     ];
 
-                    data[model] = uniqueRecords;
+                    data[model] = uniqueRecords.map((r) => r.serializeForIndexedDB());
 
-                    await this.indexedDB.create(
-                        model,
-                        uniqueRecords.map((r) => r.serializeForIndexedDB())
-                    );
+                    await this.indexedDB.create(model, data[model]);
                     dataToKeep[model] = uniqueRecords.map((r) => r[params.key]);
                 }
             }

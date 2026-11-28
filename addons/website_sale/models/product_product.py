@@ -7,6 +7,7 @@ from odoo import Command, api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.fields import Domain
 from odoo.http import request
+from odoo.tools.urls import urljoin as url_join
 
 
 class ProductProduct(models.Model):
@@ -220,11 +221,12 @@ class ProductProduct(models.Model):
                     else "https://schema.org/InStock"
                 )
 
+        product_url = url_join(base_url, self.env['ir.http']._url_for(self.website_url))
         vals = {
             "@type": "Product",
-            "@id": f"{base_url}{self.website_url}/#product-{self.id}",
+            "@id": f"{product_url}/#product-{self.id}",
             "name": self.with_context(display_default_code=False).display_name,
-            "url": f"{base_url}{self.website_url}",
+            "url": product_url,
             "image": f"{base_url}{self._get_image_1920_url()}",
         }
         if offer:
@@ -580,7 +582,10 @@ class ProductProduct(models.Model):
         if (
             message_operation == "create"
             and not self.env.user._is_internal()
-            and not self.env["website"].is_view_active("website_sale.product_comment")
+            and (
+                self.env.user._is_public()
+                or not self.env["website"].is_view_active("website_sale.product_comment")
+            )
         ):
             return [(Domain.TRUE, "write")]
         return super()._mail_get_operation_for_mail_message_operation(message_operation)

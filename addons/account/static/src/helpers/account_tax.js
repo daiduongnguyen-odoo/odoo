@@ -624,7 +624,7 @@ export const accountTaxHelpers = {
                 results.manual_total_excluded = extra_tax_data.manual_total_excluded / delta_rate;
             }
 
-            if (manual_tax_amounts) {
+            if (Object.keys(manual_tax_amounts).length > 0) {
                 results.manual_tax_amounts = {};
                 for (const [tax_id_str, amounts] of Object.entries(
                     extra_tax_data.manual_tax_amounts
@@ -1831,9 +1831,6 @@ export const accountTaxHelpers = {
         for (const base_line of base_lines) {
             const tax_details = base_line.tax_details;
             const taxes_data = tax_details.taxes_data;
-            if (!taxes_data.length) {
-                continue;
-            }
 
             base_line.manual_total_excluded_currency =
                 tax_details.total_excluded_currency + tax_details.delta_total_excluded_currency;
@@ -2670,6 +2667,7 @@ export const accountTaxHelpers = {
                             .filter((t) => this.is_price_included(t.tax, { document_tax_mode: base_line.document_tax_mode }))
                             .reduce((sum, t) => sum + t.raw_tax_amount_currency, 0)) /
                     (base_line.quantity || 1.0),
+                discount: 0.0,
                 tax_details: second_tax_details,
                 _removed_tax_data: tax_data_to_remove,
             });

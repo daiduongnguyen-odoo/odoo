@@ -755,9 +755,10 @@ class ProjectTask(models.Model):
         for task in self:
             task.display_parent_task_button = task.parent_id in accessible_parent_tasks
 
+    @api.depends_context('uid')
     def _compute_display_follow_button(self):
         if not self.env.user.share:
-            self.display_follow_button = False
+            self.display_follow_button = self.env.user.has_group('project.group_project_user')
             return
         collaborator_projects = self.env['project.collaborator'].sudo().search([
             ('project_id', 'in', self.project_id.ids),
@@ -1664,7 +1665,7 @@ class ProjectTask(models.Model):
     def _creation_message(self):
         self.ensure_one()
         if self.project_id:
-            return _('This new task has been created in the "%(project_name)s" project.',
+            return self.env._('This new task has been created in the "%(project_name)s" project.',
                      project_name=self.project_id.display_name)
         return _('This new task is not part of any project.')
 
@@ -1723,8 +1724,9 @@ class ProjectTask(models.Model):
         project_user_group_id = self.env.ref('project.group_project_user').id
         new_group = ('group_project_user', lambda pdata: pdata['type'] == 'user' and project_user_group_id in pdata['groups'], {})
         groups = [new_group] + groups
+        portal_privacy = self.project_id.privacy_visibility in ['invited_users', 'portal']
 
-        if self.project_privacy_visibility in ['invited_users', 'portal']:
+        if portal_privacy:
             groups.insert(0, (
                 'allowed_portal_users',
                 lambda pdata: pdata['type'] in ['invited_users', 'portal'],
@@ -1733,7 +1735,6 @@ class ProjectTask(models.Model):
                     'has_button_access': True,
                 }
             ))
-        portal_privacy = self.project_id.privacy_visibility in ['invited_users', 'portal']
         for group_name, _group_method, group_data in groups:
             if group_name in ('customer', 'user') or group_name == 'portal_customer' and not portal_privacy:
                 group_data['has_button_access'] = False

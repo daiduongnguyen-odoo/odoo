@@ -282,6 +282,16 @@ class TestOrmCacheSignaling(BaseCase):
             ["INFO:odoo.registry:Invalidating caches after database signaling: ['assets', 'default', 'templates.cached_values']"],
         )
 
+
+class TestOrmCacheSignalingRaw(BaseCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # do not retry, these tests must always succeed the first time and avoid
+        # an autoretry hidding errors
+        cls._retry = False
+        cls.registry = Registry(common.get_db_name())
+
     def test_signaling_after_hooks(self):
         """ The transaction following a commit or a rollback starts after the
         hooks, so that it sees what they committed in other cursors, including
@@ -370,23 +380,18 @@ class TestRealCursor(BaseCase):
 @tagged('at_install', '-post_install')  # LEGACY at_install
 class TestHTTPCursor(HttpCase):
     def test_cursor_keeps_readwriteness(self):
-        with self.env.registry.cursor(readonly=False) as cr:
-            self.assertFalse(cr.readonly)
-            cr.execute("SELECT 1")
-            cr.rollback()
-            self.assertFalse(cr.readonly)
-            cr.execute("SELECT 1")
-            cr.commit()
-            self.assertFalse(cr.readonly)
-
-        with self.env.registry.cursor(readonly=True) as cr:
-            self.assertTrue(cr.readonly)
-            cr.execute("SELECT 1")
-            cr.rollback()
-            self.assertTrue(cr.readonly)
-            cr.execute("SELECT 1")
-            cr.commit()
-            self.assertTrue(cr.readonly)
+        for has_db_replica in (True, False):
+            for readonly in (True, False):
+                with (self.subTest(has_db_replica=has_db_replica, readonly=readonly),
+                      patch('odoo.tools.config.configmanager.has_db_replica', has_db_replica)):
+                    with self.env.registry.cursor(readonly=readonly) as cr:
+                        self.assertEqual(cr.readonly, readonly)
+                        cr.execute("SELECT 1")
+                        cr.rollback()
+                        self.assertEqual(cr.readonly, readonly)
+                        cr.execute("SELECT 1")
+                        cr.commit()
+                        self.assertEqual(cr.readonly, readonly)
 
     def test_call_kw_readonly(self):
         self.authenticate('admin', 'admin')

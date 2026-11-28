@@ -1,6 +1,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 from datetime import timedelta
+from freezegun import freeze_time
 
 from odoo.addons.mrp.tests.common import TestMrpCommon
 from odoo.addons.mrp_account.tests.common import TestBomPriceCommon, TestBomPriceOperationCommon
@@ -612,6 +613,27 @@ class TestMrpAccountWorkorder(TestBomPriceOperationCommon):
             {'account_id': self.env.company.account_production_wip_account_id.id, 'debit': 0.0, 'credit': 0.0},
         ])
 
+    def test_wip_accounting_of_extra_cost(self):
+        """ Test that posting a WIP accounting entry with extra costs works as expected.
+        """
+        self.bom_1.sudo().write({'extra_cost': 10})
+        mo = self._create_mo(self.bom_1, 1)
+        mo.qty_producing = mo.product_qty
+        wizard = Form(self.env['mrp.account.wip.accounting'].with_context({'active_ids': [mo.id]}))
+        wizard.save().confirm()
+        wip_entries = self.env['account.move'].search([('ref', 'ilike', 'WIP - ' + mo.name)], limit=2)
+        self.assertEqual(len(wip_entries), 2, "Should be 2 journal entries: 1 for the WIP accounting + 1 for its reversal")
+        self.assertEqual(wip_entries[0].wip_production_count, 1, "WIP MO should be linked to entry")
+        self.assertEqual(len(wip_entries.line_ids), 6, "Should be 3 lines per journal entry: 1 for 'Component Value', 1 for '(WO) overhead', 1 for WIP")
+        self.assertRecordValues(wip_entries.line_ids, [
+            {'account_id': self.account_stock_valuation.id, 'debit': 0.0, 'credit': 0.0},
+            {'account_id': self.env.company.account_production_wip_overhead_account_id.id, 'debit': 10.0, 'credit': 0.0},
+            {'account_id': self.env.company.account_production_wip_account_id.id, 'debit': 0.0, 'credit': 10.0},
+            {'account_id': self.account_stock_valuation.id, 'debit': 0.0, 'credit': 0.0},
+            {'account_id': self.env.company.account_production_wip_overhead_account_id.id, 'debit': 0.0, 'credit': 10.0},
+            {'account_id': self.env.company.account_production_wip_account_id.id, 'debit': 10.0, 'credit': 0.0},
+        ])
+
     def test_wip_component_different_valuation_accounts(self):
         """ Check that the WIP account move lines target the valuation account of the components"""
         account_comp_valuation = self.env['account.account'].create({
@@ -816,5 +838,6 @@ class TestMrpAccountWorkorder(TestBomPriceOperationCommon):
         mo_1 = self._create_mo(self.bom_1, 1)
 
         mo_1.workorder_ids[0].workcenter_id.analytic_distribution = {str(wc_analytic_account.id): 100.0}
-        mo_1.with_user(mrp_user).button_mark_done()
+        with freeze_time(fields.Datetime.now(), auto_tick_seconds=1):
+            mo_1.with_user(mrp_user).button_mark_done()
         self.assertEqual(mo_1.state, 'done')

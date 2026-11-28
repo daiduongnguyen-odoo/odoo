@@ -452,6 +452,22 @@ class TestHrAttendance(HttpCase, TransactionCase):
             self.assertEqual(att.worked_hours, 8)
             self.assertEqual(att.check_out, datetime(2025, 3, 12, 16, 0))
 
+    def test_write_multi_attendance(self):
+        attendance_1 = self.env['hr.attendance'].create({
+            'employee_id': self.test_employee.id,
+            'check_in': '2024-01-15 08:00:00',
+        })
+        attendance_2 = self.env['hr.attendance'].create({
+            'employee_id': self.employee_kiosk.id,
+            'check_in': '2024-01-15 08:00:00',
+        })
+        (attendance_1 + attendance_2).write({'check_in': '2024-01-15 09:00:00'})
+        self.assertEqual(attendance_1.in_mode, "manual")
+        self.assertEqual(attendance_2.in_mode, "manual")
+        (attendance_1 + attendance_2).write({'check_out': '2024-01-15 10:00:00'})
+        self.assertEqual(attendance_1.out_mode, "manual")
+        self.assertEqual(attendance_2.out_mode, "manual")
+
 
 @tagged('attendance_process')
 class TestAbsenceDetectionCron(TransactionCase):
@@ -629,6 +645,33 @@ class TestAbsenceDetectionCron(TransactionCase):
             before.ids, after.ids,
             "Cron must not create technical attendances for employees who already checked in",
         )
+
+    @freeze_time('2024-01-02 06:00:00')  # yesterday = 2024-01-01 (Monday)
+    def test_attendance_overlapping_local_day_not_targeted(self):
+        """An attendance that starts before the local day of the employee and ends during or
+        after it covers that day: the employee is not absent."""
+        brussels_employee, tokyo_employee = self.env['hr.employee'].create([{
+            'name': f'Employee {tz}',
+            'tz': tz,
+            'date_version': '2020-01-01',
+            'contract_date_start': '2020-01-01',
+            'wage': 3000,
+        } for tz in ('Europe/Brussels', 'Asia/Tokyo')])
+        attendances = self.env['hr.attendance'].create([{
+            # Sunday 23:30 to Monday 00:30 in Europe/Brussels
+            'employee_id': brussels_employee.id,
+            'check_in': datetime(2023, 12, 31, 22, 30),
+            'check_out': datetime(2023, 12, 31, 23, 30),
+        }, {
+            # Sunday 23:00 to Tuesday 01:00 in Asia/Tokyo
+            'employee_id': tokyo_employee.id,
+            'check_in': datetime(2023, 12, 31, 14, 0),
+            'check_out': datetime(2024, 1, 1, 16, 0),
+        }])
+
+        self.env['hr.attendance']._cron_absence_detection()
+
+        self.assertEqual((brussels_employee | tokyo_employee).attendance_ids, attendances)
 
 
 @tagged('attendance_process')

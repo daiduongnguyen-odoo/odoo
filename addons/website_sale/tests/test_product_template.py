@@ -155,6 +155,60 @@ class TestWebsiteSaleProductTemplate(WebsiteSaleCommon):
         )
         self.assertAlmostEqual(result["price"], expected_price, places=2)
 
+    def test_get_additional_combination_info_packaging_prices_include_taxes(self):
+        self._enable_uom()
+        self.website.show_line_subtotals_tax_selection = "tax_included"
+        tax = self.env["account.tax"].sudo().create({"name": "Test tax", "amount": 15})
+        product = self._create_product(
+            list_price=100,
+            taxes_id=[Command.set(tax.ids)],
+            uom_ids=[Command.set(self.uom_pack_6.ids)],
+        )
+        with self.mock_request() as request:
+            result = self.env["product.template"]._get_additional_combination_info(
+                product,
+                1.0,
+                product.uom_id,
+                request.env.website,
+                request.pricelist,
+                request.fiscal_position,
+            )
+        self.assertAlmostEqual(result["price"], 115.0)
+        self.assertEqual(
+            result["packaging_prices"],
+            {product.uom_id.id: 115.0, self.uom_pack_6.id: 115.0},
+            "Packaging prices should be displayed like the product price, taxes included.",
+        )
+
+    def test_get_additional_combination_info_minimum_quantity(self):
+        """The minimum quantity proposed on the product page accounts for the cart quantity."""
+        self.product.minimum_quantity = 8  # The cart already contains 5 units
+
+        def get_minimum_qty(**request_kwargs):
+            with self.mock_request(**request_kwargs) as request:
+                combination_info = (
+                    self
+                    .env["product.template"]
+                    .with_context(website_sale_product_page=True)
+                    ._get_additional_combination_info(
+                        self.product,
+                        1.0,
+                        self.product.uom_id,
+                        self.website,
+                        request.pricelist,
+                        request.fiscal_position,
+                    )
+                )
+            return combination_info.get("minimum_qty")
+
+        self.assertEqual(get_minimum_qty(), 8)
+        self.assertEqual(get_minimum_qty(sale_order_id=self.cart.id), 3)
+
+        self.cart.order_line.filtered(
+            lambda sol: sol.product_id == self.product
+        ).product_uom_qty = 8
+        self.assertIsNone(get_minimum_qty(sale_order_id=self.cart.id))
+
     def test_get_available_uoms_no_restrictions(self):
         self._enable_uom()
         template = self.product.product_tmpl_id

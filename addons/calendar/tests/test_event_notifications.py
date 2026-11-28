@@ -88,6 +88,31 @@ class TestCalendarMail(CalendarMailCommon):
         self.assertEqual(self.event.partner_ids, self.user_employee_2.partner_id + self.customers)
         self.assertEqual(self.event.user_id, self.user_root)
 
+    def test_event_date_updated_attendee_timezone(self):
+        """The "Date updated" email shows the new time of the meeting in the
+        timezone of the attendee, not in the one of the user who moved it."""
+        self.user_admin.write({'email': 'admin@test.example.com', 'tz': 'Europe/Brussels'})
+        customer = self.customers[0]
+        customer.tz = 'America/New_York'
+        with freeze_time('2022-07-01 10:00:00'), self.mock_mail_gateway(mail_unlink_sent=False):
+            event = self.env['calendar.event'].with_user(self.user_admin).create({
+                'name': 'Late call',
+                'start': datetime(2022, 7, 6, 14, 0),
+                'stop': datetime(2022, 7, 6, 15, 0),
+                'partner_ids': [(4, customer.id)],
+            })
+            # 02:00 UTC: 10:00 PM on July 6th in New York, 04:00 AM on July 7th in Brussels
+            event.write({
+                'start': datetime(2022, 7, 7, 2, 0),
+                'stop': datetime(2022, 7, 7, 3, 0),
+            })
+        self.assertMailMail(
+            customer, 'sent',
+            author=self.user_admin.partner_id,
+            content='07/06/2022 at (10:00 PM To 11:00 PM) (America/New_York)',
+            fields_values={'subject': 'Late call: Date updated'},
+        )
+
     def test_event_get_default_recipients(self):
         event = self.event.with_user(self.user_employee)
         defaults = event._message_get_default_recipients()
@@ -784,6 +809,7 @@ class TestEventNotifications(CalendarMailCommon):
         wizard = self.env['calendar.event.archive.or.unlink.wizard'].create({'calendar_event_id': event.id})
         form = Form(wizard)
         form.body = f'{form.body} (edited)'
+        form.recipient_ids.remove(id=self.user_employee_2.partner_id.id)
         form.recipient_ids.add(self.user_admin.partner_id)
         form.recurrence_choice = 'future_events'
         form.subject = f'{form.subject} (edited)'
@@ -797,7 +823,14 @@ class TestEventNotifications(CalendarMailCommon):
         self.assertIn('Event canceled', self._new_mails.body)
         self.assertIn('(edited)', self._new_mails.body)
         self.assertEqual(self._new_mails.subject, 'Canceled event: Test Event Delete Notification (edited)')
-        self.assertEqual(self._new_mails.partner_ids, self.user_admin.partner_id + self.user_employee_2.partner_id)
+        # Check that the mail is sent only to the recipients set in the wizard.
+        self.assertMailMail(
+            self.user_admin.partner_id, 'outgoing',
+            fields_values={
+                'partner_ids': self.user_admin.partner_id,
+                'recipient_ids': self.user_admin.partner_id,
+            },
+        )
 
     def test_get_next_potential_limit_alarm(self):
         """
