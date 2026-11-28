@@ -190,7 +190,7 @@ class ResUsers(models.Model):
         """ The list of fields a user can write on their own user record.
         In order to add fields, please override this property on model extensions.
         """
-        return ['signature', 'action_id', 'company_id', 'email', 'name', 'image_1920', 'lang', 'tz', 'api_key_ids', 'phone']
+        return ['signature', 'action_id', 'company_id', 'email', 'name', 'image_1920', 'lang', 'tz', 'phone']
 
     @api.model
     @tools.ormcache(cache='stable')
@@ -531,6 +531,12 @@ class ResUsers(models.Model):
                     raise ValidationError(
                         _('The action "%s" cannot be set as the home action because it requires a record to be selected beforehand.', action.name)
                     )
+
+    @api.constrains('email', 'share')
+    def _check_email(self):
+        for user in self:
+            if user.share and len(tools.email_normalize_all(user.email)) > 1:
+                raise ValidationError(_('The user cannot have more than one email address.'))
 
     @api.constrains('group_ids')
     def _check_disjoint_groups(self):

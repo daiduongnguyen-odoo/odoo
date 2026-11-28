@@ -610,7 +610,7 @@ class MailMessage(models.Model):
                         FROM "mail_message" m
                         JOIN "mail_message_res_partner_rel" partner_rel
                             ON partner_rel.mail_message_id = m.id AND partner_rel.res_partner_id = %s
-                        WHERE m.id = ANY(%s) """,
+                        WHERE m.id = ANY(%s) AND m.message_type != 'user_notification' """,
                     self.env.user.partner_id.id, list(parent_ids_msg_ids),
                 )
                 for parent_id, parent_model, parent_res_id in self.env.execute_query(query):
@@ -810,10 +810,10 @@ class MailMessage(models.Model):
         if not (self.env.su or self.env.user.has_group('base.group_user')):
             vals.pop('author_id', None)
             vals.pop('email_from', None)
-        record_changed = 'model' in vals or 'res_id' in vals
+        record_changed = {'message_type', 'model', 'res_id'} & vals.keys()
         if record_changed and not self.env.is_system():
-            raise AccessError(_("Only administrators can modify 'model' and 'res_id' fields."))
-        if record_changed or 'message_type' in vals:
+            raise AccessError(_("Only administrators can modify 'model', 'res_id' and 'message_type' fields."))
+        if record_changed:
             self._invalidate_documents()
         res = super().write(vals)
         if vals.get('attachment_ids'):

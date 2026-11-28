@@ -219,7 +219,11 @@ class Account_Edi_Proxy_ClientUser(models.Model):
         if file_data['xml_tree'] is None:
             file_data['raw'] = REMOVE_EMBEDDED_DOCUMENT_BINARY_OBJECT_RE.sub(b'', file_data['raw'])
             file_data['xml_tree'] = self.env['account.move']._get_xml_tree(file_data)
-        return file_data['xml_tree'].findtext('.//{*}InvoiceTypeCode') or file_data['xml_tree'].findtext('.//{*}CreditNoteTypeCode')
+        return (
+            file_data['xml_tree'].findtext('.//{*}InvoiceTypeCode')
+            or file_data['xml_tree'].findtext('.//{*}CreditNoteTypeCode')
+            or file_data['xml_tree'].findtext('./{*}ExchangedDocument/{*}TypeCode')
+        )
 
     def _peppol_import_invoice(self, attachment, peppol_state, uuid, journal=None):
         """Save new documents in an accounting journal, when one is specified on the company.
@@ -268,6 +272,7 @@ class Account_Edi_Proxy_ClientUser(models.Model):
             move_type = 'out_invoice'
             if not journal:
                 return {}
+        partner_endpoint = self.env.context.get('peppol_sender_identifier')
 
         move = self.env['account.move'].create({
             'journal_id': journal.id,
@@ -280,15 +285,15 @@ class Account_Edi_Proxy_ClientUser(models.Model):
 
         try:
             if not move._extend_with_attachments(files_data, new=True):
-                move.peppol_move_state = 'error'
                 move.message_post(
                     body=self.env._("There was an error while importing the bill, you can find attached the incoming XML"),
                 )
-            move._autopost_bill()
+            else:
+                move._autopost_bill()
         except Exception as err:
             _logger.exception(
-                "Unexpected error occurred during the import of bill with id %s (%s uuid: %s, attachment: %s)",
-                move.id, self.proxy_type, uuid, attachment.id,
+                "Unexpected error occurred during the import of bill with id %s (%s uuid: %s, attachment: %s, partner_endpoint: %s)",
+                move.id, self.proxy_type, uuid, attachment.id, partner_endpoint,
             )
             move._message_log(
                 body=Markup("%s<br/>%s") % (
@@ -382,6 +387,10 @@ class Account_Edi_Proxy_ClientUser(models.Model):
                 endpoint=edi_user._get_peppol_proxy_endpoint('1/get_document'),
                 params={'message_uuids': message_uuids},
             )
+            # The sender identifier is only returned by `get_all_documents`.
+            uuid_to_sender = {message['uuid']: message.get('sender') for message in received_messages}
+            for uuid, content in all_messages.items():
+                content.setdefault('sender', uuid_to_sender.get(uuid))
 
             processed_uuids, moves = edi_user._peppol_process_new_messages(all_messages)
 
@@ -420,7 +429,7 @@ class Account_Edi_Proxy_ClientUser(models.Model):
                 "mimetype": mimetype,
             })
             try:
-                if uuid_move := self._peppol_import_invoice(attachment, content['state'], uuid):
+                if uuid_move := self.with_context(peppol_sender_identifier=content.get('sender'))._peppol_import_invoice(attachment, content['state'], uuid):
                     # Only acknowledge when we saved the document somewhere
                     processed_uuids.append(uuid)
                     moves += uuid_move.get('move', self.env['account.move'])
